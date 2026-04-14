@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liber — Nicovape Q Inventory Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--p:#0f2a47;--p2:#1a3f6f;--a:#0077b6;--bg:#eef2f7;--c:#fff;--tx:#1a2332;--mu:#64748b;--bd:#dde2ea;
+  --sig:#0077b6;--sym:#e8890c;--api:#d62828;--hcl:#7b2d8b;--ive:#2d6a4f;
+  --crit:#dc2626;--low:#ea580c;--mon:#ca8a04;--ok:#16a34a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:13px}
+
+/* Header */
+.hd{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hd h1{font-size:19px;font-weight:700;letter-spacing:-.3px} .hd p{font-size:11px;opacity:.65;margin-top:2px}
+.hd-r{text-align:right;font-size:10px;opacity:.7;line-height:1.5}
+
+/* KPI strip */
+.kp{display:flex;gap:10px;padding:16px 28px 4px;flex-wrap:wrap}
+.ki{background:var(--c);border-radius:9px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);flex:1;min-width:110px;border-top:3px solid var(--a)}
+.ki.s{border-top-color:var(--sig)} .ki.y{border-top-color:var(--sym)} .ki.r{border-top-color:var(--api)}
+.ki.h{border-top-color:var(--hcl)} .ki.iv{border-top-color:var(--ive)} .ki.g{border-top-color:var(--p)}
+.ki.crit{border-top-color:var(--crit)} .ki.low{border-top-color:var(--low)}
+.kl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);font-weight:700;margin-bottom:2px}
+.kv{font-size:21px;font-weight:800;color:var(--p);line-height:1} .ks{font-size:9.5px;color:var(--mu);margin-top:2px}
+
+/* Main nav */
+.mn{display:flex;gap:0;padding:0 28px;background:var(--c);border-bottom:2px solid var(--bd);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.mt{padding:11px 16px;cursor:pointer;font-weight:700;font-size:12px;color:var(--mu);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.mt:hover{color:var(--p)} .mt.active{color:var(--a);border-bottom-color:var(--a)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+.tab-badge{font-size:9px;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:1px 6px;font-weight:700}
+.tab-badge.crit{background:#fee2e2;color:#b91c1c}
+
+/* Content */
+.ct{padding:20px 28px} .pn{display:none} .pn.active{display:block}
+
+/* Tables */
+.tb{width:100%;border-collapse:collapse;font-size:12px}
+.tb th{background:#f1f5f9;padding:8px 12px;text-align:left;font-weight:700;color:var(--mu);text-transform:uppercase;font-size:9px;letter-spacing:.4px;border-bottom:2px solid var(--bd);position:sticky;top:0;z-index:1}
+.tb td{padding:7px 12px;border-bottom:1px solid #f0f4f8;vertical-align:middle}
+.tb tr:hover td{background:#f8fafc}
+.n{text-align:right;font-variant-numeric:tabular-nums}
+.dem{background:#f0fdf4;color:#15803d;font-weight:700}
+.sc{color:var(--sig)} .yc{color:var(--sym)} .rc{color:var(--api)} .pc{color:var(--hcl)} .gc{color:var(--ive)}
+.hcl-c{color:var(--hcl)} .ive-c{color:var(--ive)}
+.wc{background:#f0f7ff;color:var(--p);font-weight:700}
+.tc{background:#e8f0fe;color:var(--p);font-weight:800}
+.sh-s{background:#dbeafe!important} .sh-y{background:#fef3c7!important} .sh-r{background:#fee2e2!important} .sh-w{background:#e8f0fe!important}
+.ft td{background:#e8f0fe!important;border-top:2px solid var(--bd)}
+.dh td{background:#e8f0fe;font-size:11px;padding:6px 12px;color:#334155}
+.bo{color:var(--api)}
+.sk{max-width:200px} .cd{font-family:monospace;font-size:10.5px;font-weight:700;color:var(--a)} .nm{font-size:10px;color:var(--mu)}
+tr.zr td{opacity:.3} tr.lo td:not(.sk){color:#b91c1c}
+
+/* Coverage row highlighting */
+tr.row-crit{background:#fff5f5!important} tr.row-crit td{border-bottom-color:#fecaca!important}
+tr.row-low{background:#fff7ed!important} tr.row-low td{border-bottom-color:#fed7aa!important}
+
+/* Status pills */
+.status-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase}
+.st-crit{background:#fee2e2;color:#991b1b}
+.st-low{background:#ffedd5;color:#9a3412}
+.st-mon{background:#fef9c3;color:#854d0e}
+.st-ok{background:#dcfce7;color:#166534}
+.st-nd{background:#f1f5f9;color:#64748b}
+
+/* Progress bars */
+.bar-wrap{display:flex;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-bottom:3px;width:120px;display:inline-flex}
+.bar-ws{background:var(--a);height:100%}
+.bar-tp{background:#7b2d8b;height:100%}
+.bar-tot{font-size:11px;font-weight:600;color:var(--p);display:inline-block;margin-left:6px;vertical-align:top}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-green{background:#dcfce7;color:#15803d} .badge-yellow{background:#fef9c3;color:#a16207}
+.badge-amber{background:#ffedd5;color:#9a3412} .badge-red{background:#fee2e2;color:#b91c1c}
+.badge-gray{background:#f1f5f9;color:#64748b}
+
+/* State sub-nav */
+.sn-bar{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--bd)}
+.ss{padding:9px 13px;cursor:pointer;font-weight:700;font-size:11.5px;color:var(--mu);border-bottom:2px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:5px;transition:all .12s}
+.ss:hover{color:var(--p)} .ss.active{color:var(--a);border-bottom-color:var(--a)}
+.sn{background:#e0f2fe;color:var(--a);border-radius:8px;padding:1px 7px;font-size:9px;font-weight:700}
+.ss.active .sn{background:var(--a);color:#fff}
+.sp{display:none} .sp.active{display:block}
+.sb{display:inline-block;background:#e0e7ff;color:#3730a3;border-radius:4px;padding:1px 6px;font-size:9.5px;font-weight:700}
+
+/* Cards */
+.ca{background:var(--c);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;margin-bottom:16px}
+.ch{padding:12px 16px;font-weight:700;font-size:12px;border-bottom:1px solid var(--bd);background:#f8fafc;display:flex;justify-content:space-between;align-items:center}
+.cw{padding:16px;position:relative;height:300px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.nt{font-size:10.5px;color:var(--mu);padding:9px 16px;background:#f8fafc;border-top:1px solid var(--bd);line-height:1.5}
+.tw{max-height:540px;overflow-y:auto}
+
+/* Alert banners */
+.ab{border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:9px;font-size:11.5px;line-height:1.5}
+.ab-r{background:#fff1f2;border:1px solid #fecdd3;color:#9f1239}
+.ab-o{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
+.ab-crit{background:#fff1f2;border:2px solid #ef4444;color:#7f1d1d;font-weight:500}
+
+/* Legend row */
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;background:#f8fafc;border-top:1px solid var(--bd);font-size:10.5px;color:var(--mu)}
+.leg-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+
+/* 3PL grid */
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* Sticky header for coverage table */
+.coverage-wrap{overflow-x:auto}
+
+@media(max-width:900px){.kp,.g2,.tg{grid-template-columns:1fr}.mn{overflow-x:auto}}
+
+/* Export toolbar */
+.exp-bar{display:flex;gap:8px;padding:10px 28px;background:#f8fafc;border-bottom:1px solid var(--bd);flex-wrap:wrap;align-items:center}
+.exp-bar span{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-right:4px}
+.btn-exp{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:none;text-decoration:none;transition:all .15s}
+.btn-exp:hover{opacity:.85;transform:translateY(-1px)}
+.btn-exp.blue{background:#0077b6;color:#fff}
+.btn-exp.green{background:#16a34a;color:#fff}
+.btn-exp.purple{background:#7b2d8b;color:#fff}
+.btn-exp.gray{background:#475569;color:#fff}
+/* Chart header with export button */
+.ch-exp{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:#e0f2fe;color:#0369a1;float:right;transition:all .12s}
+.ch-exp:hover{background:#bae6fd}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div>
+    <h1>Liber Pharmaceuticals — Nicovape Q Inventory Dashboard</h1>
+    <p>Network coverage assessment across wholesalers &amp; 3PL partners</p>
+  </div>
+  <div class="hd-r">
+    Sigma: 11 Apr&nbsp;|&nbsp;Symbion: 12 Apr&nbsp;|&nbsp;API: 12 Apr<br>
+    HCL: 12 Apr&nbsp;|&nbsp;IVE: 13 Apr 2026
+  </div>
+</div>
+
+<!-- Export toolbar -->
+<div class="exp-bar">
+  <span>&#8595; Export</span>
+  <button class="btn-exp blue" onclick="dlChart('c-cov','Coverage_Stock_vs_Demand')">&#128247; Coverage Chart</button>
+  <button class="btn-exp blue" onclick="dlChart('c-wks','Weeks_of_Cover')">&#128247; Weeks Cover Chart</button>
+  <button class="btn-exp blue" onclick="dlChart('c1','SOH_All_Channels')">&#128247; SOH Chart</button>
+  <button class="btn-exp blue" onclick="dlChart('c2','SOH_by_State')">&#128247; State Chart</button>
+  <button class="btn-exp green" onclick="dlCovCSV()">&#128196; Coverage Data (CSV)</button>
+  <button class="btn-exp green" onclick="dlOverviewCSV()">&#128196; Overview Data (CSV)</button>
+  <button class="btn-exp purple" onclick="window.print()">&#128438; Print / Save PDF</button>
+</div>
+
+<!-- KPI STRIP -->
+<div class="kp">
+  <div class="ki crit"><div class="kl">Critical SKUs</div><div class="kv" style="color:var(--crit)">1</div><div class="ks">Below 4 weeks cover</div></div>
+  <div class="ki low"><div class="kl">Low Coverage SKUs</div><div class="kv" style="color:var(--low)">1</div><div class="ks">4—8 weeks cover</div></div>
+  <div class="ki s"><div class="kl">Sigma W/Sale</div><div class="kv">3,594</div><div class="ks">Units</div></div>
+  <div class="ki y"><div class="kl">Symbion W/Sale</div><div class="kv">1,235</div><div class="ks">Units</div></div>
+  <div class="ki r"><div class="kl">API W/Sale</div><div class="kv">1,829</div><div class="ks">Units</div></div>
+  <div class="ki h"><div class="kl">HCL 3PL</div><div class="kv">27,650</div><div class="ks">Unrestricted</div></div>
+  <div class="ki iv"><div class="kl">IVE 3PL</div><div class="kv">16,704</div><div class="ks">Available</div></div>
+  <div class="ki g"><div class="kl">Grand Total</div><div class="kv" style="font-size:20px">51,012</div><div class="ks">All channels</div></div>
+</div>
+
+<!-- MAIN NAV -->
+<div class="mn">
+  <div class="mt active" onclick="showTab('coverage')"><span class="dot" style="background:var(--crit)"></span>Coverage Assessment<span class="tab-badge crit">1 CRITICAL</span></div>
+  <div class="mt" onclick="showTab('overview')"><span class="dot" style="background:var(--p)"></span>Overview</div>
+  <div class="mt" onclick="showTab('wsale')"><span class="dot" style="background:var(--a)"></span>W/Sale by State</div>
+  <div class="mt" onclick="showTab('sigma')"><span class="dot" style="background:var(--sig)"></span>Sigma DCs</div>
+  <div class="mt" onclick="showTab('symbion')"><span class="dot" style="background:var(--sym)"></span>Symbion DCs</div>
+  <div class="mt" onclick="showTab('api')"><span class="dot" style="background:var(--api)"></span>API Detail<span class="tab-badge">5 alerts</span></div>
+  <div class="mt" onclick="showTab('threepl')"><span class="dot" style="background:var(--hcl)"></span>3PL (HCL + IVE)</div>
+</div>
+
+<div class="ct">
+
+<!-- ============================================================ -->
+<!-- COVERAGE ASSESSMENT TAB                                      -->
+<!-- ============================================================ -->
+<div id="pn-coverage" class="pn active">
+
+<div class="ab ab-crit">⚠️ <div><strong>1 CRITICAL SKU requires immediate action:</strong> QPB307CLS35-2 (Q35 Classic x7) has only <strong>1.9 weeks</strong> of total network cover. Wholesaler SOH is critically low and there is negligible 3PL reserve for this SKU. Replenishment must be actioned urgently.</div></div>
+
+<div class="ca">
+  <div class="ch">
+    <span>Network Stock Coverage — All SKUs</span>
+    <span style="font-size:10px;color:var(--mu);font-weight:400">Demand = Jan—Mar 2026 avg weekly sell-through (Sigma + Symbion + API). 3PL = HCL unrestricted + IVE available.</span>
+  </div>
+  <div class="coverage-wrap"><table class="tb"><thead>
+    <tr>
+      <th>SKU</th>
+      <th class="n">Sigma /wk</th><th class="n">Symbion /wk</th><th class="n">API /wk</th>
+      <th class="n" style="background:#f0fdf4">Network Demand /wk</th>
+      <th class="n sh-w">W/Sale SOH</th>
+      <th class="n" style="background:#f3e8ff">HCL Avail</th>
+      <th class="n" style="background:#dcfce7">IVE Avail</th>
+      <th class="n">Total Available Stock</th>
+      <th class="n">Weeks Cover</th>
+      <th class="n">Status</th>
+    </tr>
+  </thead><tbody>
+<tr class="">
+  <td class="sk"><span class="cd">QVB2BLK01CH</span><br><span class="nm">Q V2 Device</span></td>
+  <td class="n">205.5</td><td class="n">24.3</td><td class="n">31.5</td>
+  <td class="n dem"><strong>261.4</strong></td>
+  <td class="n">971</td>
+  <td class="n hcl-c">9,462</td><td class="n ive-c">—</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:9%"></div><div class="bar-tp" style="width:90%"></div></div>
+    <span class="bar-tot">10,433</span>
+  </td>
+  <td class="n"><span class="badge badge-green">39.9w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB307CLS50-2</span><br><span class="nm">Q50 Classic x7</span></td>
+  <td class="n">19.9</td><td class="n">19.2</td><td class="n">23.3</td>
+  <td class="n dem"><strong>62.5</strong></td>
+  <td class="n">144</td>
+  <td class="n hcl-c">—</td><td class="n ive-c">2,376</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:5%"></div><div class="bar-tp" style="width:94%"></div></div>
+    <span class="bar-tot">2,520</span>
+  </td>
+  <td class="n"><span class="badge badge-green">40.3w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB307MTL50-2</span><br><span class="nm">Q50 Menthol x7</span></td>
+  <td class="n">31.5</td><td class="n">13.3</td><td class="n">22.2</td>
+  <td class="n dem"><strong>67.0</strong></td>
+  <td class="n">676</td>
+  <td class="n hcl-c">1,636</td><td class="n ive-c">—</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:29%"></div><div class="bar-tp" style="width:70%"></div></div>
+    <span class="bar-tot">2,312</span>
+  </td>
+  <td class="n"><span class="badge badge-green">34.5w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB307MNT50-2</span><br><span class="nm">Q50 Mint x7</span></td>
+  <td class="n">48.9</td><td class="n">14.2</td><td class="n">18.2</td>
+  <td class="n dem"><strong>81.2</strong></td>
+  <td class="n">38</td>
+  <td class="n hcl-c">—</td><td class="n ive-c">3,096</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:1%"></div><div class="bar-tp" style="width:98%"></div></div>
+    <span class="bar-tot">3,134</span>
+  </td>
+  <td class="n"><span class="badge badge-green">38.6w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="row-crit">
+  <td class="sk"><span class="cd">QPB307CLS35-2</span><br><span class="nm">Q35 Classic x7</span></td>
+  <td class="n">35.4</td><td class="n">20.7</td><td class="n">28.7</td>
+  <td class="n dem"><strong>84.8</strong></td>
+  <td class="n">153</td>
+  <td class="n hcl-c">8</td><td class="n ive-c">—</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:95%"></div><div class="bar-tp" style="width:4%"></div></div>
+    <span class="bar-tot">161</span>
+  </td>
+  <td class="n"><span class="badge badge-red">1.9w</span></td>
+  <td class="n"><span class="status-pill st-crit">CRITICAL</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB307MTL35-2</span><br><span class="nm">Q35 Menthol x7</span></td>
+  <td class="n">41.3</td><td class="n">17.6</td><td class="n">22.7</td>
+  <td class="n dem"><strong>81.6</strong></td>
+  <td class="n">560</td>
+  <td class="n hcl-c">2,804</td><td class="n ive-c">—</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:16%"></div><div class="bar-tp" style="width:83%"></div></div>
+    <span class="bar-tot">3,364</span>
+  </td>
+  <td class="n"><span class="badge badge-green">41.2w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB307MNT35-2</span><br><span class="nm">Q35 Mint x7</span></td>
+  <td class="n">37.0</td><td class="n">17.6</td><td class="n">28.7</td>
+  <td class="n dem"><strong>83.2</strong></td>
+  <td class="n">68</td>
+  <td class="n hcl-c">—</td><td class="n ive-c">2,376</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:2%"></div><div class="bar-tp" style="width:97%"></div></div>
+    <span class="bar-tot">2,444</span>
+  </td>
+  <td class="n"><span class="badge badge-green">29.4w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB307CLS20-2</span><br><span class="nm">Q20 Classic x7</span></td>
+  <td class="n">15.7</td><td class="n">16.6</td><td class="n">0.0</td>
+  <td class="n dem"><strong>32.2</strong></td>
+  <td class="n">7</td>
+  <td class="n hcl-c">—</td><td class="n ive-c">2,232</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:0%"></div><div class="bar-tp" style="width:99%"></div></div>
+    <span class="bar-tot">2,239</span>
+  </td>
+  <td class="n"><span class="badge badge-green">69.4w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB307MTL20-2</span><br><span class="nm">Q20 Menthol x7</span></td>
+  <td class="n">43.3</td><td class="n">39.5</td><td class="n">0.0</td>
+  <td class="n dem"><strong>82.8</strong></td>
+  <td class="n">14</td>
+  <td class="n hcl-c">—</td><td class="n ive-c">4,608</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:0%"></div><div class="bar-tp" style="width:99%"></div></div>
+    <span class="bar-tot">4,622</span>
+  </td>
+  <td class="n"><span class="badge badge-green">55.8w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB307MNT20-2</span><br><span class="nm">Q20 Mint x7</span></td>
+  <td class="n">69.0</td><td class="n">28.1</td><td class="n">0.0</td>
+  <td class="n dem"><strong>97.2</strong></td>
+  <td class="n">29</td>
+  <td class="n hcl-c">—</td><td class="n ive-c">2,016</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:1%"></div><div class="bar-tp" style="width:98%"></div></div>
+    <span class="bar-tot">2,045</span>
+  </td>
+  <td class="n"><span class="badge badge-green">21.0w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB302CLS20-2</span><br><span class="nm">Q20 Classic x2</span></td>
+  <td class="n">273.1</td><td class="n">33.7</td><td class="n">88.8</td>
+  <td class="n dem"><strong>395.6</strong></td>
+  <td class="n">1,782</td>
+  <td class="n hcl-c">3,240</td><td class="n ive-c">—</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:35%"></div><div class="bar-tp" style="width:64%"></div></div>
+    <span class="bar-tot">5,022</span>
+  </td>
+  <td class="n"><span class="badge badge-green">12.7w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="">
+  <td class="sk"><span class="cd">QPB302MTL20-2</span><br><span class="nm">Q20 Menthol x2</span></td>
+  <td class="n">274.9</td><td class="n">24.2</td><td class="n">35.2</td>
+  <td class="n dem"><strong>334.3</strong></td>
+  <td class="n">1,286</td>
+  <td class="n hcl-c">8,652</td><td class="n ive-c">—</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:12%"></div><div class="bar-tp" style="width:87%"></div></div>
+    <span class="bar-tot">9,938</span>
+  </td>
+  <td class="n"><span class="badge badge-green">29.7w</span></td>
+  <td class="n"><span class="status-pill st-ok">OK</span></td>
+</tr>
+<tr class="row-low">
+  <td class="sk"><span class="cd">QPB302MNT20-2</span><br><span class="nm">Q20 Mint x2</span></td>
+  <td class="n">308.6</td><td class="n">50.0</td><td class="n">0.0</td>
+  <td class="n dem"><strong>358.7</strong></td>
+  <td class="n">930</td>
+  <td class="n hcl-c">1,848</td><td class="n ive-c">—</td>
+  <td class="n">
+    <div class="bar-wrap"><div class="bar-ws" style="width:33%"></div><div class="bar-tp" style="width:66%"></div></div>
+    <span class="bar-tot">2,778</span>
+  </td>
+  <td class="n"><span class="badge badge-amber">7.7w</span></td>
+  <td class="n"><span class="status-pill st-low">LOW</span></td>
+</tr>
+
+  </tbody></table></div>
+  <div class="legend">
+    <span><span class="leg-dot" style="background:var(--a)"></span>Blue bar = W/Sale SOH</span>
+    <span><span class="leg-dot" style="background:var(--hcl)"></span>Purple bar = 3PL (HCL + IVE)</span>
+    <span class="badge badge-red">CRITICAL</span> &lt;4 weeks &nbsp;
+    <span class="badge badge-amber">LOW</span> 4—8 weeks &nbsp;
+    <span class="badge badge-yellow">MONITOR</span> 8—12 weeks &nbsp;
+    <span class="badge badge-green">OK</span> 12+ weeks
+  </div>
+  <div class="nt">Demand rate derived from 3-month average (Jan—Mar 2026) across Sigma and Symbion sell-through data + API average weekly forecast (3-month rolling). 3PL availability = HCL unrestricted stock + IVE available stock. Does not account for stock in transit or on order at wholesalers.</div>
+</div>
+
+<div class="g2">
+  <div class="ca">
+    <div class="ch">Total Available Stock vs Network Demand (4-week threshold)<button class="ch-exp" onclick="dlChart('c-cov','Coverage_Stock_vs_Demand')">&#128247; PNG</button></div>
+    <div class="cw"><canvas id="c-cov"></canvas></div>
+  </div>
+  <div class="ca">
+    <div class="ch">Weeks of Cover per SKU<button class="ch-exp" onclick="dlChart('c-wks','Weeks_of_Cover')">&#128247; PNG</button></div>
+    <div class="cw"><canvas id="c-wks"></canvas></div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- OVERVIEW TAB                                                  -->
+<!-- ============================================================ -->
+<div id="pn-overview" class="pn">
+<div class="ca">
+  <div class="ch"><span>All Channels — SKU-Level SOH</span><span style="font-size:10px;color:var(--mu);font-weight:400">Retail packs</span></div>
+  <div class="tw"><table class="tb"><thead><tr>
+    <th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">W/Sale Total</th><th class="n" style="background:#f3e8ff">HCL 3PL</th><th class="n" style="background:#dcfce7">IVE 3PL</th><th class="n" style="background:#e8f0fe">Grand Total</th><th class="n">Wks Cover</th>
+  </tr></thead><tbody>
+<tr>
+  <td class="sk"><span class="cd">QVB2BLK01CH</span><br><span class="nm">Q V2 Device</span></td>
+  <td class="n sc">532</td><td class="n yc">211</td><td class="n rc">228</td>
+  <td class="n wc"><strong>971</strong></td>
+  <td class="n pc">9,462</td><td class="n gc">—</td>
+  <td class="n tc"><strong>10,433</strong></td>
+  <td class="n"><span class="badge badge-green">39.9w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307CLS50-2</span><br><span class="nm">Q50 Classic x7</span></td>
+  <td class="n sc">28</td><td class="n yc">18</td><td class="n rc">98</td>
+  <td class="n wc"><strong>144</strong></td>
+  <td class="n pc">—</td><td class="n gc">2,376</td>
+  <td class="n tc"><strong>2,520</strong></td>
+  <td class="n"><span class="badge badge-green">40.3w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307MTL50-2</span><br><span class="nm">Q50 Menthol x7</span></td>
+  <td class="n sc">276</td><td class="n yc">160</td><td class="n rc">240</td>
+  <td class="n wc"><strong>676</strong></td>
+  <td class="n pc">1,636</td><td class="n gc">—</td>
+  <td class="n tc"><strong>2,312</strong></td>
+  <td class="n"><span class="badge badge-green">34.5w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307MNT50-2</span><br><span class="nm">Q50 Mint x7</span></td>
+  <td class="n sc">18</td><td class="n yc">—</td><td class="n rc">20</td>
+  <td class="n wc"><strong>38</strong></td>
+  <td class="n pc">—</td><td class="n gc">3,096</td>
+  <td class="n tc"><strong>3,134</strong></td>
+  <td class="n"><span class="badge badge-green">38.6w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307CLS35-2</span><br><span class="nm">Q35 Classic x7</span></td>
+  <td class="n sc">17</td><td class="n yc">4</td><td class="n rc">132</td>
+  <td class="n wc"><strong>153</strong></td>
+  <td class="n pc">8</td><td class="n gc">—</td>
+  <td class="n tc"><strong>161</strong></td>
+  <td class="n"><span class="badge badge-red">1.9w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307MTL35-2</span><br><span class="nm">Q35 Menthol x7</span></td>
+  <td class="n sc">295</td><td class="n yc">132</td><td class="n rc">133</td>
+  <td class="n wc"><strong>560</strong></td>
+  <td class="n pc">2,804</td><td class="n gc">—</td>
+  <td class="n tc"><strong>3,364</strong></td>
+  <td class="n"><span class="badge badge-green">41.2w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307MNT35-2</span><br><span class="nm">Q35 Mint x7</span></td>
+  <td class="n sc">49</td><td class="n yc">12</td><td class="n rc">7</td>
+  <td class="n wc"><strong>68</strong></td>
+  <td class="n pc">—</td><td class="n gc">2,376</td>
+  <td class="n tc"><strong>2,444</strong></td>
+  <td class="n"><span class="badge badge-green">29.4w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307CLS20-2</span><br><span class="nm">Q20 Classic x7</span></td>
+  <td class="n sc">—</td><td class="n yc">7</td><td class="n rc">—</td>
+  <td class="n wc"><strong>7</strong></td>
+  <td class="n pc">—</td><td class="n gc">2,232</td>
+  <td class="n tc"><strong>2,239</strong></td>
+  <td class="n"><span class="badge badge-green">69.4w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307MTL20-2</span><br><span class="nm">Q20 Menthol x7</span></td>
+  <td class="n sc">—</td><td class="n yc">14</td><td class="n rc">—</td>
+  <td class="n wc"><strong>14</strong></td>
+  <td class="n pc">—</td><td class="n gc">4,608</td>
+  <td class="n tc"><strong>4,622</strong></td>
+  <td class="n"><span class="badge badge-green">55.8w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB307MNT20-2</span><br><span class="nm">Q20 Mint x7</span></td>
+  <td class="n sc">11</td><td class="n yc">18</td><td class="n rc">—</td>
+  <td class="n wc"><strong>29</strong></td>
+  <td class="n pc">—</td><td class="n gc">2,016</td>
+  <td class="n tc"><strong>2,045</strong></td>
+  <td class="n"><span class="badge badge-green">21.0w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB302CLS20-2</span><br><span class="nm">Q20 Classic x2</span></td>
+  <td class="n sc">1,094</td><td class="n yc">258</td><td class="n rc">430</td>
+  <td class="n wc"><strong>1,782</strong></td>
+  <td class="n pc">3,240</td><td class="n gc">—</td>
+  <td class="n tc"><strong>5,022</strong></td>
+  <td class="n"><span class="badge badge-green">12.7w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB302MTL20-2</span><br><span class="nm">Q20 Menthol x2</span></td>
+  <td class="n sc">550</td><td class="n yc">195</td><td class="n rc">541</td>
+  <td class="n wc"><strong>1,286</strong></td>
+  <td class="n pc">8,652</td><td class="n gc">—</td>
+  <td class="n tc"><strong>9,938</strong></td>
+  <td class="n"><span class="badge badge-green">29.7w</span></td>
+</tr>
+<tr>
+  <td class="sk"><span class="cd">QPB302MNT20-2</span><br><span class="nm">Q20 Mint x2</span></td>
+  <td class="n sc">724</td><td class="n yc">206</td><td class="n rc">—</td>
+  <td class="n wc"><strong>930</strong></td>
+  <td class="n pc">1,848</td><td class="n gc">—</td>
+  <td class="n tc"><strong>2,778</strong></td>
+  <td class="n"><span class="badge badge-amber">7.7w</span></td>
+</tr>
+
+  </tbody><tfoot><tr class="ft">
+    <td><strong>TOTAL</strong></td>
+    <td class="n sc"><strong>3,594</strong></td><td class="n yc"><strong>1,235</strong></td><td class="n rc"><strong>1,829</strong></td>
+    <td class="n wc"><strong>6,658</strong></td>
+    <td class="n pc"><strong>27,650</strong></td><td class="n gc"><strong>16,704</strong></td>
+    <td class="n tc"><strong>51,012</strong></td><td></td>
+  </tr></tfoot></table></div>
+  <div class="nt">Weeks Cover = Total Available Stock (W/Sale SOH + HCL unrestricted + IVE available) divided by network avg weekly demand.</div>
+</div>
+<div class="g2">
+  <div class="ca"><div class="ch">SOH by SKU — All Channels Stacked<button class="ch-exp" onclick="dlChart('c1','SOH_All_Channels')">&#128247; PNG</button></div><div class="cw"><canvas id="c1"></canvas></div></div>
+  <div class="ca"><div class="ch">W/Sale SOH by State<button class="ch-exp" onclick="dlChart('c2','SOH_by_State')">&#128247; PNG</button></div><div class="cw"><canvas id="c2"></canvas></div></div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- W/SALE BY STATE TAB                                          -->
+<!-- ============================================================ -->
+<div id="pn-wsale" class="pn">
+  <div class="sn-bar">
+    <div class="ss active" data-st="ALL" onclick="showSt('ALL',this)">ALL<span class="sn">6,658</span></div>
+    <div class="ss active" data-st="NSW" onclick="showSt('NSW',this)">NSW<span class="sn">2,011</span></div>
+<div class="ss" data-st="VIC" onclick="showSt('VIC',this)">VIC<span class="sn">1,327</span></div>
+<div class="ss" data-st="QLD" onclick="showSt('QLD',this)">QLD<span class="sn">1,265</span></div>
+<div class="ss" data-st="SA" onclick="showSt('SA',this)">SA<span class="sn">915</span></div>
+<div class="ss" data-st="WA" onclick="showSt('WA',this)">WA<span class="sn">777</span></div>
+<div class="ss" data-st="TAS" onclick="showSt('TAS',this)">TAS<span class="sn">339</span></div>
+<div class="ss" data-st="NT" onclick="showSt('NT',this)">NT<span class="sn">24</span></div>
+
+  </div>
+  <div class="sp active" id="sp-ALL">
+    <div class="ca"><div class="ch">National Totals — All States</div>
+    <table class="tb"><thead><tr><th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">Total W/Sale</th></tr></thead>
+    <tbody><tr><td class="sk"><span class="cd">QVB2BLK01CH</span><br><span class="nm">Q V2 Device</span></td><td class="n sc">532</td><td class="n yc">211</td><td class="n rc">228</td><td class="n wc"><strong>971</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span><br><span class="nm">Q50 Classic x7</span></td><td class="n sc">28</td><td class="n yc">18</td><td class="n rc">98</td><td class="n wc"><strong>144</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span><br><span class="nm">Q50 Menthol x7</span></td><td class="n sc">276</td><td class="n yc">160</td><td class="n rc">240</td><td class="n wc"><strong>676</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span><br><span class="nm">Q50 Mint x7</span></td><td class="n sc">18</td><td class="n yc">—</td><td class="n rc">20</td><td class="n wc"><strong>38</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span><br><span class="nm">Q35 Classic x7</span></td><td class="n sc">17</td><td class="n yc">4</td><td class="n rc">132</td><td class="n wc"><strong>153</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span><br><span class="nm">Q35 Menthol x7</span></td><td class="n sc">295</td><td class="n yc">132</td><td class="n rc">133</td><td class="n wc"><strong>560</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span><br><span class="nm">Q35 Mint x7</span></td><td class="n sc">49</td><td class="n yc">12</td><td class="n rc">7</td><td class="n wc"><strong>68</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span><br><span class="nm">Q20 Classic x7</span></td><td class="n sc">—</td><td class="n yc">7</td><td class="n rc">—</td><td class="n wc"><strong>7</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span><br><span class="nm">Q20 Menthol x7</span></td><td class="n sc">—</td><td class="n yc">14</td><td class="n rc">—</td><td class="n wc"><strong>14</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span><br><span class="nm">Q20 Mint x7</span></td><td class="n sc">11</td><td class="n yc">18</td><td class="n rc">—</td><td class="n wc"><strong>29</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span><br><span class="nm">Q20 Classic x2</span></td><td class="n sc">1,094</td><td class="n yc">258</td><td class="n rc">430</td><td class="n wc"><strong>1,782</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span><br><span class="nm">Q20 Menthol x2</span></td><td class="n sc">550</td><td class="n yc">195</td><td class="n rc">541</td><td class="n wc"><strong>1,286</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span><br><span class="nm">Q20 Mint x2</span></td><td class="n sc">724</td><td class="n yc">206</td><td class="n rc">—</td><td class="n wc"><strong>930</strong></td></tr>
+</tbody>
+    <tfoot><tr class="ft"><td><strong>NATIONAL</strong></td><td class="n sc"><strong>3,594</strong></td><td class="n yc"><strong>1,235</strong></td><td class="n rc"><strong>1,829</strong></td><td class="n wc"><strong>6,658</strong></td></tr></tfoot></table>
+    <div class="nt">Kemps Creek=NSW, Darwin=NT, Berrinba/Townsville=QLD, Pooraka=SA, Bridgewater=TAS, Truganina=VIC, Canning Vale=WA.</div></div>
+  </div>
+  <div class="sp active" id="sp-NSW">
+<table class="tb"><thead><tr><th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">Total W/Sale</th></tr></thead>
+<tbody><tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n sc">136</td><td class="n yc">46</td><td class="n rc">34</td><td class="n wc"><strong>216</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n sc">9</td><td class="n yc">—</td><td class="n rc">45</td><td class="n wc"><strong>54</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n sc">85</td><td class="n yc">37</td><td class="n rc">53</td><td class="n wc"><strong>175</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n sc">1</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>1</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n sc">53</td><td class="n yc">28</td><td class="n rc">26</td><td class="n wc"><strong>107</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n sc">5</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>5</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n sc">359</td><td class="n yc">129</td><td class="n rc">97</td><td class="n wc"><strong>585</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n sc">199</td><td class="n yc">56</td><td class="n rc">351</td><td class="n wc"><strong>606</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n sc">239</td><td class="n yc">23</td><td class="n rc">—</td><td class="n wc"><strong>262</strong></td></tr>
+</tbody>
+<tfoot><tr class="ft"><td><strong>NSW TOTAL</strong></td><td class="n sc"><strong>1,086</strong></td><td class="n yc"><strong>319</strong></td><td class="n rc"><strong>606</strong></td><td class="n wc"><strong>2,011</strong></td></tr></tfoot></table>
+</div>
+<div class="sp" id="sp-VIC">
+<table class="tb"><thead><tr><th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">Total W/Sale</th></tr></thead>
+<tbody><tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n sc">180</td><td class="n yc">34</td><td class="n rc">45</td><td class="n wc"><strong>259</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">53</td><td class="n wc"><strong>53</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n sc">58</td><td class="n yc">22</td><td class="n rc">83</td><td class="n wc"><strong>163</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n sc">3</td><td class="n yc">—</td><td class="n rc">83</td><td class="n wc"><strong>86</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n sc">34</td><td class="n yc">22</td><td class="n rc">24</td><td class="n wc"><strong>80</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n sc">7</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>7</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n sc">143</td><td class="n yc">16</td><td class="n rc">39</td><td class="n wc"><strong>198</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n sc">145</td><td class="n yc">50</td><td class="n rc">52</td><td class="n wc"><strong>247</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n sc">174</td><td class="n yc">60</td><td class="n rc">—</td><td class="n wc"><strong>234</strong></td></tr>
+</tbody>
+<tfoot><tr class="ft"><td><strong>VIC TOTAL</strong></td><td class="n sc"><strong>744</strong></td><td class="n yc"><strong>204</strong></td><td class="n rc"><strong>379</strong></td><td class="n wc"><strong>1,327</strong></td></tr></tfoot></table>
+</div>
+<div class="sp" id="sp-QLD">
+<table class="tb"><thead><tr><th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">Total W/Sale</th></tr></thead>
+<tbody><tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n sc">48</td><td class="n yc">56</td><td class="n rc">43</td><td class="n wc"><strong>147</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n sc">28</td><td class="n yc">25</td><td class="n rc">28</td><td class="n wc"><strong>81</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">11</td><td class="n wc"><strong>11</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n sc">86</td><td class="n yc">21</td><td class="n rc">23</td><td class="n wc"><strong>130</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n sc">—</td><td class="n yc">8</td><td class="n rc">7</td><td class="n wc"><strong>15</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n sc">351</td><td class="n yc">77</td><td class="n rc">97</td><td class="n wc"><strong>525</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n sc">59</td><td class="n yc">47</td><td class="n rc">102</td><td class="n wc"><strong>208</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n sc">57</td><td class="n yc">91</td><td class="n rc">—</td><td class="n wc"><strong>148</strong></td></tr>
+</tbody>
+<tfoot><tr class="ft"><td><strong>QLD TOTAL</strong></td><td class="n sc"><strong>629</strong></td><td class="n yc"><strong>325</strong></td><td class="n rc"><strong>311</strong></td><td class="n wc"><strong>1,265</strong></td></tr></tfoot></table>
+</div>
+<div class="sp" id="sp-SA">
+<table class="tb"><thead><tr><th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">Total W/Sale</th></tr></thead>
+<tbody><tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n sc">87</td><td class="n yc">17</td><td class="n rc">35</td><td class="n wc"><strong>139</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n sc">—</td><td class="n yc">7</td><td class="n rc">—</td><td class="n wc"><strong>7</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n sc">12</td><td class="n yc">21</td><td class="n rc">29</td><td class="n wc"><strong>62</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">20</td><td class="n wc"><strong>20</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n sc">13</td><td class="n yc">—</td><td class="n rc">21</td><td class="n wc"><strong>34</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n sc">18</td><td class="n yc">14</td><td class="n rc">32</td><td class="n wc"><strong>64</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n sc">—</td><td class="n yc">14</td><td class="n rc">—</td><td class="n wc"><strong>14</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n sc">—</td><td class="n yc">7</td><td class="n rc">—</td><td class="n wc"><strong>7</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n sc">172</td><td class="n yc">24</td><td class="n rc">—</td><td class="n wc"><strong>196</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n sc">120</td><td class="n yc">24</td><td class="n rc">—</td><td class="n wc"><strong>144</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n sc">204</td><td class="n yc">24</td><td class="n rc">—</td><td class="n wc"><strong>228</strong></td></tr>
+</tbody>
+<tfoot><tr class="ft"><td><strong>SA TOTAL</strong></td><td class="n sc"><strong>626</strong></td><td class="n yc"><strong>152</strong></td><td class="n rc"><strong>137</strong></td><td class="n wc"><strong>915</strong></td></tr></tfoot></table>
+</div>
+<div class="sp" id="sp-WA">
+<table class="tb"><thead><tr><th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">Total W/Sale</th></tr></thead>
+<tbody><tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n sc">57</td><td class="n yc">46</td><td class="n rc">71</td><td class="n wc"><strong>174</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n sc">—</td><td class="n yc">11</td><td class="n rc">—</td><td class="n wc"><strong>11</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n sc">25</td><td class="n yc">14</td><td class="n rc">47</td><td class="n wc"><strong>86</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">17</td><td class="n wc"><strong>17</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n sc">95</td><td class="n yc">39</td><td class="n rc">28</td><td class="n wc"><strong>162</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n sc">6</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>6</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n sc">55</td><td class="n yc">—</td><td class="n rc">197</td><td class="n wc"><strong>252</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n sc">6</td><td class="n yc">—</td><td class="n rc">36</td><td class="n wc"><strong>42</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n sc">19</td><td class="n yc">8</td><td class="n rc">—</td><td class="n wc"><strong>27</strong></td></tr>
+</tbody>
+<tfoot><tr class="ft"><td><strong>WA TOTAL</strong></td><td class="n sc"><strong>263</strong></td><td class="n yc"><strong>118</strong></td><td class="n rc"><strong>396</strong></td><td class="n wc"><strong>777</strong></td></tr></tfoot></table>
+</div>
+<div class="sp" id="sp-TAS">
+<table class="tb"><thead><tr><th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">Total W/Sale</th></tr></thead>
+<tbody><tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n sc">24</td><td class="n yc">12</td><td class="n rc">—</td><td class="n wc"><strong>36</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n sc">10</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>10</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n sc">68</td><td class="n yc">41</td><td class="n rc">—</td><td class="n wc"><strong>109</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n sc">18</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>18</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n sc">—</td><td class="n yc">4</td><td class="n rc">—</td><td class="n wc"><strong>4</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n sc">9</td><td class="n yc">8</td><td class="n rc">—</td><td class="n wc"><strong>17</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n sc">27</td><td class="n yc">4</td><td class="n rc">—</td><td class="n wc"><strong>31</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n sc">—</td><td class="n yc">7</td><td class="n rc">—</td><td class="n wc"><strong>7</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n sc">—</td><td class="n yc">11</td><td class="n rc">—</td><td class="n wc"><strong>11</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n sc">14</td><td class="n yc">12</td><td class="n rc">—</td><td class="n wc"><strong>26</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n sc">21</td><td class="n yc">18</td><td class="n rc">—</td><td class="n wc"><strong>39</strong></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n sc">31</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>31</strong></td></tr>
+</tbody>
+<tfoot><tr class="ft"><td><strong>TAS TOTAL</strong></td><td class="n sc"><strong>222</strong></td><td class="n yc"><strong>117</strong></td><td class="n rc"><strong>—</strong></td><td class="n wc"><strong>339</strong></td></tr></tfoot></table>
+</div>
+<div class="sp" id="sp-NT">
+<table class="tb"><thead><tr><th>SKU</th><th class="n sh-s">Sigma</th><th class="n sh-y">Symbion</th><th class="n sh-r">API</th><th class="n sh-w">Total W/Sale</th></tr></thead>
+<tbody><tr class="zr"><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n sc">9</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>9</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n sc">10</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>10</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="lo"><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n sc">5</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>5</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+<tr class="zr"><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n sc">—</td><td class="n yc">—</td><td class="n rc">—</td><td class="n wc"><strong>—</strong></td></tr>
+</tbody>
+<tfoot><tr class="ft"><td><strong>NT TOTAL</strong></td><td class="n sc"><strong>24</strong></td><td class="n yc"><strong>—</strong></td><td class="n rc"><strong>—</strong></td><td class="n wc"><strong>24</strong></td></tr></tfoot></table>
+</div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- SIGMA DC TAB                                                  -->
+<!-- ============================================================ -->
+<div id="pn-sigma" class="pn">
+<div class="g2">
+  <div class="ca" style="grid-column:1/-1"><div class="ch"><span>Sigma — SOH by DC &amp; SKU</span><span style="font-size:10px;color:var(--mu);font-weight:400">Stock Date: 11 Apr 2026</span></div>
+  <div class="tw"><table class="tb"><thead><tr><th>SKU</th><th class="n">SOH</th><th class="n">In Transit</th><th class="n">Restricted</th><th class="n">SOO</th><th class="n bo">Back Order</th></tr></thead>
+  <tbody><tr class="dh"><td colspan="6"><strong>NSW - KEMPS CREEK</strong> <span class="sb">NSW</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">136</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">9</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">85</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">1</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">53</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">5</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">432</td><td class="n bo">35</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">648</td><td class="n bo">24</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">256</td><td class="n bo">5</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">359</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">199</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">239</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="6"><strong>NT - DARWIN</strong> <span class="sb">NT</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">9</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">10</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">5</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="6"><strong>QLD - BERRINBA</strong> <span class="sb">QLD</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">26</td><td class="n">—</td><td class="n">—</td><td class="n">132</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">24</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">12</td><td class="n">—</td><td class="n">—</td><td class="n">72</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">504</td><td class="n bo">36</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">216</td><td class="n bo">24</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">79</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">3</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">504</td><td class="n bo">42</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">864</td><td class="n bo">41</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">360</td><td class="n bo">18</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">351</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">55</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">57</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="6"><strong>QLD - TOWNSVILLE</strong> <span class="sb">QLD</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">22</td><td class="n">—</td><td class="n">—</td><td class="n">48</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">2</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">16</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">84</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">72</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">4</td><td class="n">—</td><td class="n">—</td><td class="n">156</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">156</td><td class="n bo">4</td></tr>
+<tr class="dh"><td colspan="6"><strong>SA - POORAKA</strong> <span class="sb">SA</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">87</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">36</td><td class="n bo">6</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">12</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">48</td><td class="n bo">4</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">13</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">18</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">12</td><td class="n bo">1</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">108</td><td class="n bo">13</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">156</td><td class="n bo">29</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">36</td><td class="n bo">3</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">172</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">120</td><td class="n">—</td><td class="n">—</td><td class="n">48</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">204</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="6"><strong>TAS - BRIDGEWATER</strong> <span class="sb">TAS</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">24</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">10</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">68</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">18</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">72</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">9</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">27</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">11</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">48</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">14</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">21</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">31</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="6"><strong>VIC - TRUGANINA</strong> <span class="sb">VIC</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">180</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">6</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">58</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">72</td><td class="n bo">8</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">3</td><td class="n">—</td><td class="n">—</td><td class="n">72</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">34</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">360</td><td class="n bo">22</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">648</td><td class="n bo">22</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">216</td><td class="n bo">30</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">143</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">145</td><td class="n">—</td><td class="n">—</td><td class="n">216</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">174</td><td class="n">—</td><td class="n">—</td><td class="n">144</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="6"><strong>WA - CANNING VALE</strong> <span class="sb">WA</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">57</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">48</td><td class="n bo">4</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">25</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">1</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">12</td><td class="n bo">4</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">95</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">84</td><td class="n bo">2</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">12</td><td class="n bo">7</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">36</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">6</td><td class="n">—</td><td class="n">—</td><td class="n">60</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">55</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">6</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">19</td><td class="n">—</td><td class="n">—</td><td class="n">12</td><td class="n bo">—</td></tr>
+</tbody></table></div>
+  <div class="nt">SOH = unrestricted. Restricted = quarantine/holds. SOO = stock on order from pharmacy customers. Back Order = unfulfilled demand.</div></div>
+  <div class="ca" style="grid-column:1/-1"><div class="ch">Sigma SOH + SOO by DC<button class="ch-exp" onclick="dlChart('c3','Sigma_SOH_by_DC')">&#128247; PNG</button></div><div class="cw"><canvas id="c3"></canvas></div></div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SYMBION DC TAB                                                -->
+<!-- ============================================================ -->
+<div id="pn-symbion" class="pn">
+<div class="ca"><div class="ch"><span>Symbion — SOH by DC &amp; SKU</span><span style="font-size:10px;color:var(--mu);font-weight:400">Data: 12 Apr 2026</span></div>
+<div class="tw"><table class="tb"><thead><tr><th>SKU</th><th class="n">SOH</th><th class="n">Available</th><th class="n">On Order</th><th class="n bo">Back Order</th></tr></thead>
+<tbody><tr class="dh"><td colspan="5"><strong>NSW — Kemps Creek</strong></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">46</td><td class="n">42</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">48</td><td class="n bo">6</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">37</td><td class="n">35</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">28</td><td class="n bo">9</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">44</td><td class="n bo">4</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">28</td><td class="n">28</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">20</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">56</td><td class="n bo">10</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">72</td><td class="n bo">5</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">28</td><td class="n bo">3</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">129</td><td class="n">129</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">56</td><td class="n">56</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">23</td><td class="n">23</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="5"><strong>NSW — Greystanes</strong></td></tr>
+<tr class="dh"><td colspan="5"><strong>QLD — Acacia Ridge</strong></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">56</td><td class="n">52</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">32</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">25</td><td class="n">25</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">44</td><td class="n bo">12</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">16</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">21</td><td class="n">18</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">8</td><td class="n">8</td><td class="n">16</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">88</td><td class="n bo">2</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">96</td><td class="n bo">5</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">16</td><td class="n bo">4</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">77</td><td class="n">77</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">47</td><td class="n">47</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">91</td><td class="n">84</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="5"><strong>SA — Adelaide</strong></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">17</td><td class="n">17</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">7</td><td class="n">7</td><td class="n">16</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">21</td><td class="n">20</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">16</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">12</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">14</td><td class="n">14</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">16</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">6</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">14</td><td class="n">14</td><td class="n">20</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">7</td><td class="n">7</td><td class="n">32</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">24</td><td class="n">24</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">24</td><td class="n">24</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">24</td><td class="n">24</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="5"><strong>TAS — Hobart</strong></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">12</td><td class="n">12</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">8</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">41</td><td class="n">41</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">4</td><td class="n">4</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">8</td><td class="n">8</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">4</td><td class="n">4</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">7</td><td class="n">7</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">8</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">11</td><td class="n">11</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">12</td><td class="n">12</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">18</td><td class="n">18</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">—</td><td class="n">—</td><td class="n">12</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="5"><strong>VIC — Keysborough</strong></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">34</td><td class="n">34</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">16</td><td class="n bo">1</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">22</td><td class="n">22</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">20</td><td class="n bo">5</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">24</td><td class="n bo">11</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">22</td><td class="n">22</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">20</td><td class="n bo">2</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">40</td><td class="n bo">10</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">32</td><td class="n bo">7</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">40</td><td class="n bo">6</td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span> Q20 Classic x2</td><td class="n">16</td><td class="n">16</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span> Q20 Menthol x2</td><td class="n">50</td><td class="n">50</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">60</td><td class="n">60</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr class="dh"><td colspan="5"><strong>WA — Kewdale</strong></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span> Q V2 Device</td><td class="n">46</td><td class="n">46</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span> Q50 Classic x7</td><td class="n">11</td><td class="n">11</td><td class="n">20</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span> Q50 Menthol x7</td><td class="n">14</td><td class="n">12</td><td class="n">20</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span> Q50 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">16</td><td class="n bo">1</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span> Q35 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">44</td><td class="n bo">13</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span> Q35 Menthol x7</td><td class="n">39</td><td class="n">39</td><td class="n">—</td><td class="n bo">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span> Q35 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">44</td><td class="n bo">1</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span> Q20 Classic x7</td><td class="n">—</td><td class="n">—</td><td class="n">128</td><td class="n bo">39</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span> Q20 Menthol x7</td><td class="n">—</td><td class="n">—</td><td class="n">48</td><td class="n bo">7</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span> Q20 Mint x7</td><td class="n">—</td><td class="n">—</td><td class="n">60</td><td class="n bo">2</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span> Q20 Mint x2</td><td class="n">8</td><td class="n">—</td><td class="n">12</td><td class="n bo">—</td></tr>
+</tbody></table></div>
+<div class="nt">Available = SOH less Reserved. On Order = stock ordered from Liber. OOSR 'R' (retired) lines excluded.</div></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- API DETAIL TAB                                                -->
+<!-- ============================================================ -->
+<div id="pn-api" class="pn">
+  <div class="ab ab-r">⚠️ <strong>5 SKU/state combinations</strong> at API below 4 weeks cover on SOH alone.</div>
+  <div class="ca"><div class="ch"><span>API — SOH by SKU &amp; State</span><span style="font-size:10px;color:var(--mu);font-weight:400">Sorted by weeks cover</span></div>
+  <div class="tw"><table class="tb"><thead><tr><th>SKU</th><th>State</th><th class="n">SOH</th><th class="n">SOO</th><th class="n">Avg Wkly Forecast</th><th class="n">Weeks Cover (SOH)</th><th class="n">Weeks Cover (SOH+SOO)</th></tr></thead>
+  <tbody><tr><td class="sk"><span class="cd">QPB307CLS35-2</span><br><small>Q35 Classic x7</small></td><td><span class="sb">NSW</span></td><td class="n">—</td><td class="n">76</td><td class="n">7.3</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">10.4w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span><br><small>Q50 Classic x7</small></td><td><span class="sb">QLD</span></td><td class="n">—</td><td class="n">37</td><td class="n">5.0</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-amber">7.4w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span><br><small>Q50 Classic x7</small></td><td><span class="sb">SA</span></td><td class="n">—</td><td class="n">60</td><td class="n">5.5</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">10.9w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span><br><small>Q50 Classic x7</small></td><td><span class="sb">WA</span></td><td class="n">—</td><td class="n">44</td><td class="n">3.7</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">12.0w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span><br><small>Q35 Mint x7</small></td><td><span class="sb">NSW</span></td><td class="n">—</td><td class="n">44</td><td class="n">4.2</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">10.6w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span><br><small>Q35 Mint x7</small></td><td><span class="sb">VIC</span></td><td class="n">—</td><td class="n">96</td><td class="n">9.5</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">10.1w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span><br><small>Q35 Mint x7</small></td><td><span class="sb">WA</span></td><td class="n">—</td><td class="n">140</td><td class="n">11.8</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">11.8w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span><br><small>Q50 Mint x7</small></td><td><span class="sb">NSW</span></td><td class="n">—</td><td class="n">52</td><td class="n">4.0</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">13.0w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span><br><small>Q50 Mint x7</small></td><td><span class="sb">QLD</span></td><td class="n">—</td><td class="n">40</td><td class="n">3.8</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">10.4w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span><br><small>Q50 Mint x7</small></td><td><span class="sb">VIC</span></td><td class="n">—</td><td class="n">44</td><td class="n">3.8</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">11.5w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span><br><small>Q50 Mint x7</small></td><td><span class="sb">WA</span></td><td class="n">—</td><td class="n">64</td><td class="n">5.5</td><td class="n"><span class="badge badge-red">0.0w</span></td><td class="n"><span class="badge badge-green">11.6w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span><br><small>Q20 Classic x2</small></td><td><span class="sb">VIC</span></td><td class="n">39</td><td class="n">210</td><td class="n">49.0</td><td class="n"><span class="badge badge-red">0.8w</span></td><td class="n"><span class="badge badge-amber">5.1w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span><br><small>Q35 Classic x7</small></td><td><span class="sb">WA</span></td><td class="n">17</td><td class="n">84</td><td class="n">9.3</td><td class="n"><span class="badge badge-red">1.8w</span></td><td class="n"><span class="badge badge-green">10.8w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span><br><small>Q35 Mint x7</small></td><td><span class="sb">QLD</span></td><td class="n">7</td><td class="n">32</td><td class="n">3.2</td><td class="n"><span class="badge badge-red">2.2w</span></td><td class="n"><span class="badge badge-green">12.3w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span><br><small>Q35 Classic x7</small></td><td><span class="sb">QLD</span></td><td class="n">11</td><td class="n">24</td><td class="n">3.7</td><td class="n"><span class="badge badge-red">3.0w</span></td><td class="n"><span class="badge badge-green">9.5w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span><br><small>Q35 Menthol x7</small></td><td><span class="sb">WA</span></td><td class="n">28</td><td class="n">76</td><td class="n">9.2</td><td class="n"><span class="badge badge-red">3.1w</span></td><td class="n"><span class="badge badge-green">11.3w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span><br><small>Q20 Menthol x2</small></td><td><span class="sb">VIC</span></td><td class="n">52</td><td class="n">24</td><td class="n">10.8</td><td class="n"><span class="badge badge-amber">4.8w</span></td><td class="n"><span class="badge badge-amber">7.0w</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span><br><small>Q V2 Device</small></td><td><span class="sb">NSW</span></td><td class="n">34</td><td class="n">30</td><td class="n">6.7</td><td class="n"><span class="badge badge-amber">5.1w</span></td><td class="n"><span class="badge badge-green">9.6w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span><br><small>Q50 Menthol x7</small></td><td><span class="sb">QLD</span></td><td class="n">28</td><td class="n">16</td><td class="n">5.3</td><td class="n"><span class="badge badge-amber">5.2w</span></td><td class="n"><span class="badge badge-green">8.2w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span><br><small>Q20 Menthol x2</small></td><td><span class="sb">WA</span></td><td class="n">36</td><td class="n">36</td><td class="n">6.0</td><td class="n"><span class="badge badge-amber">6.0w</span></td><td class="n"><span class="badge badge-green">12.0w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span><br><small>Q35 Menthol x7</small></td><td><span class="sb">NSW</span></td><td class="n">26</td><td class="n">24</td><td class="n">4.2</td><td class="n"><span class="badge badge-amber">6.2w</span></td><td class="n"><span class="badge badge-green">12.0w</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span><br><small>Q V2 Device</small></td><td><span class="sb">WA</span></td><td class="n">71</td><td class="n">36</td><td class="n">9.8</td><td class="n"><span class="badge badge-amber">7.2w</span></td><td class="n"><span class="badge badge-green">10.9w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span><br><small>Q20 Classic x2</small></td><td><span class="sb">NSW</span></td><td class="n">97</td><td class="n">—</td><td class="n">13.2</td><td class="n"><span class="badge badge-amber">7.4w</span></td><td class="n"><span class="badge badge-amber">7.4w</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span><br><small>Q V2 Device</small></td><td><span class="sb">VIC</span></td><td class="n">45</td><td class="n">—</td><td class="n">6.0</td><td class="n"><span class="badge badge-amber">7.5w</span></td><td class="n"><span class="badge badge-amber">7.5w</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span><br><small>Q V2 Device</small></td><td><span class="sb">SA</span></td><td class="n">35</td><td class="n">24</td><td class="n">4.5</td><td class="n"><span class="badge badge-amber">7.8w</span></td><td class="n"><span class="badge badge-green">13.1w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span><br><small>Q35 Menthol x7</small></td><td><span class="sb">QLD</span></td><td class="n">23</td><td class="n">—</td><td class="n">2.8</td><td class="n"><span class="badge badge-green">8.1w</span></td><td class="n"><span class="badge badge-green">8.1w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span><br><small>Q50 Menthol x7</small></td><td><span class="sb">WA</span></td><td class="n">47</td><td class="n">32</td><td class="n">5.7</td><td class="n"><span class="badge badge-green">8.3w</span></td><td class="n"><span class="badge badge-green">13.9w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span><br><small>Q35 Menthol x7</small></td><td><span class="sb">VIC</span></td><td class="n">24</td><td class="n">—</td><td class="n">2.8</td><td class="n"><span class="badge badge-green">8.5w</span></td><td class="n"><span class="badge badge-green">8.5w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span><br><small>Q35 Menthol x7</small></td><td><span class="sb">SA</span></td><td class="n">32</td><td class="n">16</td><td class="n">3.7</td><td class="n"><span class="badge badge-green">8.7w</span></td><td class="n"><span class="badge badge-green">13.1w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span><br><small>Q50 Menthol x7</small></td><td><span class="sb">SA</span></td><td class="n">29</td><td class="n">8</td><td class="n">3.3</td><td class="n"><span class="badge badge-green">8.7w</span></td><td class="n"><span class="badge badge-green">11.1w</span></td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span><br><small>Q V2 Device</small></td><td><span class="sb">QLD</span></td><td class="n">43</td><td class="n">—</td><td class="n">4.5</td><td class="n"><span class="badge badge-green">9.6w</span></td><td class="n"><span class="badge badge-green">9.6w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span><br><small>Q35 Classic x7</small></td><td><span class="sb">SA</span></td><td class="n">21</td><td class="n">8</td><td class="n">2.0</td><td class="n"><span class="badge badge-green">10.5w</span></td><td class="n"><span class="badge badge-green">14.5w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span><br><small>Q20 Classic x2</small></td><td><span class="sb">WA</span></td><td class="n">197</td><td class="n">—</td><td class="n">18.5</td><td class="n"><span class="badge badge-green">10.6w</span></td><td class="n"><span class="badge badge-green">10.6w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span><br><small>Q50 Classic x7</small></td><td><span class="sb">VIC</span></td><td class="n">53</td><td class="n">—</td><td class="n">5.0</td><td class="n"><span class="badge badge-green">10.6w</span></td><td class="n"><span class="badge badge-green">10.6w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span><br><small>Q50 Classic x7</small></td><td><span class="sb">NSW</span></td><td class="n">45</td><td class="n">—</td><td class="n">4.2</td><td class="n"><span class="badge badge-green">10.8w</span></td><td class="n"><span class="badge badge-green">10.8w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span><br><small>Q20 Classic x2</small></td><td><span class="sb">QLD</span></td><td class="n">97</td><td class="n">—</td><td class="n">8.2</td><td class="n"><span class="badge badge-green">11.9w</span></td><td class="n"><span class="badge badge-green">11.9w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span><br><small>Q35 Classic x7</small></td><td><span class="sb">VIC</span></td><td class="n">83</td><td class="n">—</td><td class="n">6.3</td><td class="n"><span class="badge badge-green">13.1w</span></td><td class="n"><span class="badge badge-green">13.1w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span><br><small>Q50 Menthol x7</small></td><td><span class="sb">NSW</span></td><td class="n">53</td><td class="n">—</td><td class="n">3.7</td><td class="n"><span class="badge badge-green">14.5w</span></td><td class="n"><span class="badge badge-green">14.5w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span><br><small>Q20 Menthol x2</small></td><td><span class="sb">QLD</span></td><td class="n">102</td><td class="n">—</td><td class="n">7.0</td><td class="n"><span class="badge badge-green">14.6w</span></td><td class="n"><span class="badge badge-green">14.6w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span><br><small>Q50 Menthol x7</small></td><td><span class="sb">VIC</span></td><td class="n">83</td><td class="n">—</td><td class="n">4.2</td><td class="n"><span class="badge badge-green">19.9w</span></td><td class="n"><span class="badge badge-green">19.9w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span><br><small>Q50 Mint x7</small></td><td><span class="sb">SA</span></td><td class="n">20</td><td class="n">—</td><td class="n">1.0</td><td class="n"><span class="badge badge-green">20.0w</span></td><td class="n"><span class="badge badge-green">20.0w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span><br><small>Q20 Menthol x2</small></td><td><span class="sb">NSW</span></td><td class="n">351</td><td class="n">—</td><td class="n">11.3</td><td class="n"><span class="badge badge-green">31.0w</span></td><td class="n"><span class="badge badge-green">31.0w</span></td></tr>
+<tr><td class="sk"><span class="cd">QPB302CLS20-2</span><br><small>Q20 Classic x2</small></td><td><span class="sb">SA</span></td><td class="n">—</td><td class="n">1</td><td class="n">0.0</td><td class="n"><span class="badge badge-green">nanw</span></td><td class="n"><span class="badge badge-green">infw</span></td></tr>
+</tbody></table></div>
+  <div class="nt"><span class="badge badge-red" style="margin-right:4px">&lt;4w</span> Critical &nbsp;<span class="badge badge-amber" style="margin-right:4px">4—8w</span> Monitor &nbsp;<span class="badge badge-green">8w+</span> Healthy &nbsp;—&nbsp; Weeks Cover = SOH / Avg Weekly Forecast (3-month rolling)</div></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 3PL TAB                                                       -->
+<!-- ============================================================ -->
+<div id="pn-threepl" class="pn">
+<div class="ab ab-o">📦 <strong>6-week transition:</strong> Both HCL (Sydney) and IVE (Melbourne) active until ~25 May 2026, then IVE becomes sole 3PL. Note that IVE x7 pack stock is currently the primary reserve for those SKUs.</div>
+<div class="tg">
+  <div class="ca"><div class="ch" style="border-top:3px solid var(--hcl)"><span>HCL — Sydney</span><span style="font-size:10px;color:var(--mu);font-weight:400">12 Apr 2026</span></div>
+  <table class="tb"><thead><tr><th>SKU</th><th class="n">Unrestricted</th><th class="n">QI</th><th class="n">Total</th></tr></thead>
+  <tbody><tr><td class="sk"><span class="cd">QPB302CLS20-2</span><br><small>Q20 Classic x2</small></td><td class="n"><strong>3,240</strong></td><td class="n">36</td><td class="n">3,276</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span><br><small>Q20 Mint x2</small></td><td class="n"><strong>1,848</strong></td><td class="n">36</td><td class="n">1,884</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span><br><small>Q20 Menthol x2</small></td><td class="n"><strong>8,652</strong></td><td class="n">36</td><td class="n">8,688</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span><br><small>Q20 Classic x7</small></td><td class="n"><strong>—</strong></td><td class="n">8</td><td class="n">8</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span><br><small>Q35 Classic x7</small></td><td class="n"><strong>8</strong></td><td class="n">8</td><td class="n">16</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span><br><small>Q50 Classic x7</small></td><td class="n"><strong>—</strong></td><td class="n">12</td><td class="n">12</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span><br><small>Q20 Mint x7</small></td><td class="n"><strong>—</strong></td><td class="n">8</td><td class="n">8</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span><br><small>Q35 Mint x7</small></td><td class="n"><strong>—</strong></td><td class="n">12</td><td class="n">12</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span><br><small>Q50 Mint x7</small></td><td class="n"><strong>—</strong></td><td class="n">8</td><td class="n">8</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span><br><small>Q20 Menthol x7</small></td><td class="n"><strong>—</strong></td><td class="n">8</td><td class="n">8</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span><br><small>Q35 Menthol x7</small></td><td class="n"><strong>2,804</strong></td><td class="n">12</td><td class="n">2,816</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span><br><small>Q50 Menthol x7</small></td><td class="n"><strong>1,636</strong></td><td class="n">9</td><td class="n">1,645</td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span><br><small>Q V2 Device</small></td><td class="n"><strong>9,462</strong></td><td class="n">6</td><td class="n">9,468</td></tr>
+</tbody>
+  <tfoot><tr class="ft"><td><strong>TOTAL</strong></td><td class="n"><strong>27,650</strong></td><td class="n"><strong>199</strong></td><td class="n"><strong>27,849</strong></td></tr></tfoot></table>
+  <div class="nt">Unrestricted = available for dispatch. QI = quality inspection hold (not counted in coverage assessment).</div></div>
+
+  <div class="ca"><div class="ch" style="border-top:3px solid var(--ive)"><span>IVE — Melbourne</span><span style="font-size:10px;color:var(--mu);font-weight:400">13 Apr 2026</span></div>
+  <table class="tb"><thead><tr><th>SKU</th><th class="n">SOH</th><th class="n">Available</th><th class="n">Quarantined</th></tr></thead>
+  <tbody><tr><td class="sk"><span class="cd">QPB302CLS20-2</span><br><small>Q20 Classic x2</small></td><td class="n"><strong>—</strong></td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MNT20-2</span><br><small>Q20 Mint x2</small></td><td class="n"><strong>—</strong></td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB302MTL20-2</span><br><small>Q20 Menthol x2</small></td><td class="n"><strong>—</strong></td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS20-2</span><br><small>Q20 Classic x7</small></td><td class="n"><strong>2,232</strong></td><td class="n">2,232</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS35-2</span><br><small>Q35 Classic x7</small></td><td class="n"><strong>—</strong></td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307CLS50-2</span><br><small>Q50 Classic x7</small></td><td class="n"><strong>2,376</strong></td><td class="n">2,376</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT20-2</span><br><small>Q20 Mint x7</small></td><td class="n"><strong>2,016</strong></td><td class="n">2,016</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT35-2</span><br><small>Q35 Mint x7</small></td><td class="n"><strong>2,376</strong></td><td class="n">2,376</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MNT50-2</span><br><small>Q50 Mint x7</small></td><td class="n"><strong>3,096</strong></td><td class="n">3,096</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL20-2</span><br><small>Q20 Menthol x7</small></td><td class="n"><strong>4,608</strong></td><td class="n">4,608</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL35-2</span><br><small>Q35 Menthol x7</small></td><td class="n"><strong>—</strong></td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QPB307MTL50-2</span><br><small>Q50 Menthol x7</small></td><td class="n"><strong>—</strong></td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td class="sk"><span class="cd">QVB2BLK01CH</span><br><small>Q V2 Device</small></td><td class="n"><strong>—</strong></td><td class="n">—</td><td class="n">—</td></tr>
+</tbody>
+  <tfoot><tr class="ft"><td><strong>TOTAL</strong></td><td class="n"><strong>16,704</strong></td><td class="n"><strong>16,704</strong></td><td class="n"><strong>—</strong></td></tr></tfoot></table>
+  <div class="nt">Available = SOH less Allocated. IVE warehouse EP (Melbourne).</div></div>
+</div>
+<div class="ca"><div class="ch">Combined 3PL SOH by SKU<button class="ch-exp" onclick="dlChart('c4','3PL_SOH_by_SKU')">&#128247; PNG</button></div><div class="cw" style="height:270px"><canvas id="c4"></canvas></div></div>
+</div>
+
+</div><!-- /ct -->
+
+<script>
+function showTab(name){
+  document.querySelectorAll('.pn').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.mt').forEach(function(t){t.classList.remove('active')});
+  document.getElementById('pn-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(name==='sigma'&&!window._s3){initC3();window._s3=1}
+  if(name==='threepl'&&!window._s4){initC4();window._s4=1}
+}
+function showSt(st,el){
+  document.querySelectorAll('.sp').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.ss').forEach(function(t){t.classList.remove('active')});
+  document.getElementById('sp-'+st).classList.add('active');
+  el.classList.add('active');
+}
+
+var L=["Q V2 Device", "Q50 Classic x7", "Q50 Menthol x7", "Q50 Mint x7", "Q35 Classic x7", "Q35 Menthol x7", "Q35 Mint x7", "Q20 Classic x7", "Q20 Menthol x7", "Q20 Mint x7", "Q20 Classic x2", "Q20 Menthol x2", "Q20 Mint x2"];
+var WSOH=[971, 144, 676, 38, 153, 560, 68, 7, 14, 29, 1782, 1286, 930],HCLA=[9462, 0, 1636, 0, 8, 2804, 0, 0, 0, 0, 3240, 8652, 1848],IVEA=[0, 2376, 0, 3096, 0, 0, 2376, 2232, 4608, 2016, 0, 0, 0],DEM=[261.37, 62.52, 66.98, 81.21, 84.79, 81.64, 83.25, 32.25, 82.83, 97.15, 395.61, 334.32, 358.66],WKS=[39.9, 40.3, 34.5, 38.6, 1.9, 41.2, 29.4, 69.4, 55.8, 21.0, 12.7, 29.7, 7.7];
+
+window.addEventListener('load',function(){
+  // Coverage chart: stacked total vs 4-week demand line
+  var four_wk = DEM.map(function(d){return d*4});
+  new Chart(document.getElementById('c-cov').getContext('2d'),{
+    type:'bar',
+    data:{labels:L,datasets:[
+      {label:'W/Sale SOH',data:WSOH,backgroundColor:'#0077b6',stack:'s'},
+      {label:'HCL Available',data:HCLA,backgroundColor:'#7b2d8b',stack:'s'},
+      {label:'IVE Available',data:IVEA,backgroundColor:'#2d6a4f',stack:'s'},
+      {label:'4-Week Demand Threshold',data:four_wk,type:'line',borderColor:'#ef4444',borderWidth:2,borderDash:[6,3],pointRadius:4,pointBackgroundColor:'#ef4444',fill:false,order:0}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{stacked:true,ticks:{font:{size:9},maxRotation:45}},y:{stacked:true,grid:{color:'#f0f4f8'},title:{display:true,text:'Units',font:{size:10}}}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false}}}
+  });
+
+  // Weeks cover chart with 4w/8w/12w reference lines
+  var bg = WKS.map(function(w){
+    if(w===0)return '#e2e8f0';
+    if(w<4)return '#ef4444';
+    if(w<8)return '#ea580c';
+    if(w<12)return '#ca8a04';
+    return '#16a34a';
+  });
+  new Chart(document.getElementById('c-wks').getContext('2d'),{
+    type:'bar',
+    data:{labels:L,datasets:[{label:'Weeks Cover',data:WKS,backgroundColor:bg,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{grid:{color:'#f0f4f8'},
+        title:{display:true,text:'Weeks',font:{size:10}},
+        afterDataLimits:function(scale){scale.max=Math.max(scale.max,16)}}},
+      plugins:{
+        annotation:{annotations:{
+          l4:{type:'line',yMin:4,yMax:4,borderColor:'#ef4444',borderWidth:1.5,borderDash:[4,4],label:{content:'4w',enabled:false}},
+          l8:{type:'line',yMin:8,yMax:8,borderColor:'#ea580c',borderWidth:1.5,borderDash:[4,4]},
+          l12:{type:'line',yMin:12,yMax:12,borderColor:'#ca8a04',borderWidth:1.5,borderDash:[4,4]}
+        }},
+        legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y.toFixed(1)+' weeks'}}}
+      }
+    }
+  });
+
+  // Overview charts
+  new Chart(document.getElementById('c1').getContext('2d'),{type:'bar',data:{labels:L,datasets:[
+    {label:'Sigma',data:[532.0, 28.0, 276.0, 18.0, 17.0, 295.0, 49.0, 0, 0, 11.0, 1094.0, 550.0, 724.0],backgroundColor:'#0077b6',stack:'s'},
+    {label:'Symbion',data:[211.0, 18.0, 160.0, 0, 4.0, 132.0, 12.0, 7.0, 14.0, 18.0, 258.0, 195.0, 206.0],backgroundColor:'#e8890c',stack:'s'},
+    {label:'API',data:[228.0, 98.0, 240.0, 20.0, 132.0, 133.0, 7.0, 0, 0, 0, 430.0, 541.0, 0],backgroundColor:'#d62828',stack:'s'},
+    {label:'HCL',data:[9462, 0, 1636, 0, 8, 2804, 0, 0, 0, 0, 3240, 8652, 1848],backgroundColor:'#7b2d8b',stack:'s'},
+    {label:'IVE',data:[0, 2376, 0, 3096, 0, 0, 2376, 2232, 4608, 2016, 0, 0, 0],backgroundColor:'#2d6a4f',stack:'s'}
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{font:{size:9},maxRotation:45}},y:{stacked:true,grid:{color:'#f0f4f8'}}},plugins:{legend:{position:'bottom',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false}}}});
+
+  new Chart(document.getElementById('c2').getContext('2d'),{type:'bar',data:{labels:["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT"],datasets:[
+    {label:'Sigma',data:[1086, 744, 629, 626, 263, 222, 24],backgroundColor:'#0077b6',stack:'s'},
+    {label:'Symbion',data:[319, 204, 325, 152, 118, 117, 0],backgroundColor:'#e8890c',stack:'s'},
+    {label:'API',data:[606, 379, 311, 137, 396, 0, 0],backgroundColor:'#d62828',stack:'s'}
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,grid:{color:'#f0f4f8'}}},plugins:{legend:{position:'bottom',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false}}}});
+});
+
+function initC3(){
+  new Chart(document.getElementById('c3').getContext('2d'),{type:'bar',data:{labels:["NSW - KEMPS CREEK", "NT - DARWIN", "QLD - BERRINBA", "QLD - TOWNSVILLE", "SA - POORAKA", "TAS - BRIDGEWATER", "VIC - TRUGANINA", "WA - CANNING VALE"],datasets:[
+    {label:'SOH',data:[1086, 24, 580, 49, 626, 222, 744, 263],backgroundColor:'#0077b6'},
+    {label:'SOO',data:[1912, 0, 3228, 540, 444, 192, 2040, 288],backgroundColor:'#90e0ef'}
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{grid:{color:'#f0f4f8'}}},plugins:{legend:{position:'bottom',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false}}}});
+}
+function initC4(){
+  new Chart(document.getElementById('c4').getContext('2d'),{type:'bar',data:{labels:L,datasets:[
+    {label:'HCL (Sydney)',data:[9462, 0, 1636, 0, 8, 2804, 0, 0, 0, 0, 3240, 8652, 1848],backgroundColor:'#7b2d8b',stack:'s'},
+    {label:'IVE (Erskine Park NSW)',data:[0, 2376, 0, 3096, 0, 0, 2376, 2232, 4608, 2016, 0, 0, 0],backgroundColor:'#2d6a4f',stack:'s'}
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{font:{size:9},maxRotation:45}},y:{stacked:true,grid:{color:'#f0f4f8'}}},plugins:{legend:{position:'bottom',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false}}}});
+}
+
+/* ---- EXPORT FUNCTIONS ---- */
+function dlChart(canvasId, filename){
+  // If the chart lives on a tab that hasn't been rendered yet, switch to it first
+  var canvas = document.getElementById(canvasId);
+  if(!canvas){alert('Please view the chart tab first, then export.');return;}
+  // Render to a white-background PNG (Chart.js canvas is transparent by default)
+  var tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = canvas.width; tmpCanvas.height = canvas.height;
+  var ctx = tmpCanvas.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,tmpCanvas.width,tmpCanvas.height);
+  ctx.drawImage(canvas,0,0);
+  var a = document.createElement('a');
+  a.download = 'Liber_' + filename + '_' + new Date().toISOString().slice(0,10) + '.png';
+  a.href = tmpCanvas.toDataURL('image/png');
+  a.click();
+}
+
+function dlCSV(rows, filename){
+  var csv = rows.map(function(r){
+    return r.map(function(v){
+      var s = String(v);
+      if(s.indexOf(',')>-1||s.indexOf('"')>-1||s.indexOf('\n')>-1) s='"'+s.replace(/"/g,'""')+'"';
+      return s;
+    }).join(',');
+  }).join('\r\n');
+  var blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.download = 'Liber_' + filename + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.href = url; a.click();
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+
+function dlCovCSV(){
+  var SKUS=["QVB2BLK01CH","QPB307CLS50-2","QPB307MTL50-2","QPB307MNT50-2","QPB307CLS35-2","QPB307MTL35-2","QPB307MNT35-2","QPB307CLS20-2","QPB307MTL20-2","QPB307MNT20-2","QPB302CLS20-2","QPB302MTL20-2","QPB302MNT20-2"];
+  var NAMES=["Q V2 Device","Q50 Classic x7","Q50 Menthol x7","Q50 Mint x7","Q35 Classic x7","Q35 Menthol x7","Q35 Mint x7","Q20 Classic x7","Q20 Menthol x7","Q20 Mint x7","Q20 Classic x2","Q20 Menthol x2","Q20 Mint x2"];
+  var SIG_W=[261.37,62.52,66.98,81.21,84.79,81.64,83.25,32.25,82.83,97.15,395.61,334.32,358.66];
+  var rows=[['SKU','Product Name','Sigma Weekly Demand','Symbion Weekly Demand','API Weekly Demand','Total Weekly Demand','W/Sale SOH','HCL Available','IVE Available','Total 3PL Available','Total Stock','Weeks of Cover','Status']];
+  // Derived data matching dashboard
+  var SYM_W=[0,0,0,0,0,17.6,17.6,16.6,39.5,28.1,33.7,24.2,50.0];
+  var API_W=[0,0,0,0,0,22.7,28.7,0,0,0,88.8,35.2,0];
+  for(var i=0;i<SKUS.length;i++){
+    var tot=DEM[i], ws=WSOH[i], hcl=HCLA[i], ive=IVEA[i], tpl=hcl+ive, tot_s=ws+tpl, wks=WKS[i];
+    var st=wks===0?'NO DATA':wks<4?'CRITICAL':wks<8?'LOW':wks<12?'MONITOR':'OK';
+    rows.push([SKUS[i],NAMES[i],DEM[i]-SYM_W[i]-API_W[i],SYM_W[i],API_W[i],tot.toFixed(2),ws,hcl,ive,tpl,tot_s,wks.toFixed(1),st]);
+  }
+  dlCSV(rows,'Coverage_Assessment');
+}
+
+function dlOverviewCSV(){
+  var SKUS=["QVB2BLK01CH","QPB307CLS50-2","QPB307MTL50-2","QPB307MNT50-2","QPB307CLS35-2","QPB307MTL35-2","QPB307MNT35-2","QPB307CLS20-2","QPB307MTL20-2","QPB307MNT20-2","QPB302CLS20-2","QPB302MTL20-2","QPB302MNT20-2"];
+  var NAMES=["Q V2 Device","Q50 Classic x7","Q50 Menthol x7","Q50 Mint x7","Q35 Classic x7","Q35 Menthol x7","Q35 Mint x7","Q20 Classic x7","Q20 Menthol x7","Q20 Mint x7","Q20 Classic x2","Q20 Menthol x2","Q20 Mint x2"];
+  var SIG=[532,28,276,18,17,295,49,0,0,11,1094,550,724];
+  var SYM=[211,18,160,0,4,132,12,7,14,18,258,195,206];
+  var API=[228,98,240,20,132,133,7,0,0,0,430,541,0];
+  var rows=[['SKU','Product Name','Sigma SOH','Symbion SOH','API SOH','W/Sale Total','HCL 3PL','IVE 3PL','Grand Total','Weekly Demand','Weeks Cover']];
+  for(var i=0;i<SKUS.length;i++){
+    var wsTotal=SIG[i]+SYM[i]+API[i];
+    var grand=wsTotal+HCLA[i]+IVEA[i];
+    rows.push([SKUS[i],NAMES[i],SIG[i],SYM[i],API[i],wsTotal,HCLA[i],IVEA[i],grand,DEM[i].toFixed(2),WKS[i].toFixed(1)]);
+  }
+  dlCSV(rows,'Overview_SOH');
+}
+</script>
+</body>
+</html>
