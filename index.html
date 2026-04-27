@@ -103,6 +103,40 @@ th.sortable::after{content:' \2195';font-size:8px;opacity:.3;margin-left:2px}
 th.sort-asc::after{content:' \25B2';font-size:8px;opacity:1;color:var(--a)!important}
 th.sort-desc::after{content:' \25BC';font-size:8px;opacity:1;color:var(--a)!important}
 th.sort-asc,th.sort-desc{color:var(--a)!important}
+/* ---- PO module ---- */
+.po-cell{font-size:10.5px;line-height:1.35;text-align:right;font-variant-numeric:tabular-nums}
+.po-cell .po-q{font-weight:700;color:var(--p)}
+.po-cell .po-dt{display:block;color:var(--mu);font-size:9.5px;margin-top:1px}
+.po-cell.empty{color:#cbd5e1}
+.tl{min-width:160px;width:170px;padding:2px 6px}
+.tl-bar{position:relative;height:10px;background:#eef2f7;border-radius:5px;margin:4px 0 3px}
+.tl-bar.gap{background:linear-gradient(to right,#16a34a 0%,#16a34a var(--out),#fee2e2 var(--out),#fee2e2 var(--po),#eef2f7 var(--po),#eef2f7 100%)}
+.tl-bar.cover{background:linear-gradient(to right,#16a34a 0%,#16a34a var(--out),#dcfce7 var(--out),#dcfce7 100%)}
+.tl-bar.popre{background:linear-gradient(to right,#bae6fd 0%,#bae6fd var(--po),#16a34a var(--po),#16a34a var(--out),#dcfce7 var(--out),#dcfce7 100%)}
+.tl-mark{position:absolute;top:-2px;width:2px;height:14px;background:var(--p)}
+.tl-mark.now{left:0;background:var(--p)}
+.tl-mark.out{background:var(--crit)}
+.tl-mark.po{background:var(--a)}
+.tl-lbl{display:flex;justify-content:space-between;font-size:9px;color:var(--mu);line-height:1.2}
+.tl-lbl .out{color:#b91c1c;font-weight:700}
+.tl-lbl .po{color:var(--a);font-weight:700}
+.tl-lbl .ok{color:#15803d;font-weight:700}
+.tl-empty{font-size:9.5px;color:#cbd5e1;text-align:center;padding:6px 0}
+/* ---- PO ledger panel ---- */
+.po-ledger{background:var(--c);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:16px;overflow:hidden}
+.po-ledger .ch{padding:12px 16px;font-weight:700;font-size:12px;border-bottom:1px solid var(--bd);background:#f8fafc;display:flex;justify-content:space-between;align-items:center}
+.po-ledger table{width:100%;border-collapse:collapse;font-size:11.5px}
+.po-ledger th{background:#f1f5f9;padding:8px 10px;font-weight:700;color:var(--mu);text-transform:uppercase;font-size:9.5px;letter-spacing:.4px;border-bottom:2px solid var(--bd);text-align:right;white-space:nowrap}
+.po-ledger th:first-child,.po-ledger th.lt{text-align:left}
+.po-ledger td{padding:7px 10px;border-bottom:1px solid #f0f4f8;font-variant-numeric:tabular-nums;text-align:right}
+.po-ledger td.lt{text-align:left}
+.po-ledger tr:hover td{background:#f8fafc}
+.po-ledger .ft td{background:#e8f0fe!important;font-weight:700;border-top:2px solid var(--bd)}
+.po-tag{display:inline-block;background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700;font-family:monospace}
+.po-status{display:inline-block;border-radius:10px;padding:2px 8px;font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.po-status.confirmed{background:#dbeafe;color:#1e40af}
+.po-status.transit{background:#fef3c7;color:#92400e}
+.po-status.received{background:#dcfce7;color:#166534}
 </style>
 </head>
 <body>
@@ -134,6 +168,7 @@ th.sort-asc,th.sort-desc{color:var(--a)!important}
   <div class="ki r" onclick="showTab('api', this)" title="View API DCs"><div class="kl">API W/Sale</div><div class="kv">1,853</div><div class="ks">Units</div></div>
   <div class="ki h" onclick="showTab('threepl', this)" title="View 3PL (HCL + IVE)"><div class="kl">HCL 3PL</div><div class="kv">22,804</div><div class="ks">Unrestricted</div></div>
   <div class="ki iv" onclick="showTab('threepl', this)" title="View 3PL (HCL + IVE)"><div class="kl">IVE 3PL</div><div class="kv">16,152</div><div class="ks">Available</div></div>
+  <div class="ki" style="border-top-color:#1e40af" onclick="showTab('coverage', this)" title="View Open POs ledger (in Coverage tab)"><div class="kl">Incoming PO</div><div class="kv" style="color:#1e40af">106,056</div><div class="ks">9 lines open</div></div>
   <div class="ki g" onclick="showTab('overview', this)" title="View Overview"><div class="kl">Grand Total</div><div class="kv" style="font-size:20px">48,271</div><div class="ks">All channels</div></div>
 </div>
 <div class="mn">
@@ -142,8 +177,9 @@ th.sort-asc,th.sort-desc{color:var(--a)!important}
   <div class="mt" onclick="showTab('wsale', this)"><span class="dot" style="background:var(--a)"></span>W/Sale by State</div>
   <div class="mt" onclick="showTab('sigma', this)"><span class="dot" style="background:var(--sig)"></span>Sigma DCs</div>
   <div class="mt" onclick="showTab('symbion', this)"><span class="dot" style="background:var(--sym)"></span>Symbion DCs</div>
-  <div class="mt" onclick="showTab('api', this)"><span class="dot" style="background:var(--api)"></span>API Detail</div>
+  <div class="mt" onclick="showTab('api', this)"><span class="dot" style="background:var(--api)"></span>API DCs</div>
   <div class="mt" onclick="showTab('threepl', this)"><span class="dot" style="background:var(--hcl)"></span>3PL (HCL + IVE)</div>
+  <div class="mt" onclick="showTab('pos', this)"><span class="dot" style="background:#1e40af"></span>Open POs<span class="tab-badge" style="background:#dbeafe;color:#1e40af">9</span></div>
 </div>
 <div class="ct">
 
@@ -164,10 +200,13 @@ th.sort-asc,th.sort-desc{color:var(--a)!important}
       <th class="n" style="background:#dcfce7">IVE Avail</th>
       <th class="n">Total Available Stock</th>
       <th class="n">Weeks Cover</th>
+      <th class="n" style="background:#dbeafe">Incoming PO</th>
+      <th class="n" style="background:#dbeafe">Cover w/PO</th>
+      <th class="n" style="background:#dbeafe">Timeline (26 wk)</th>
       <th class="n">Status</th>
     </tr>
   </thead><tbody>
-<tr class=""><td class="sk"><span class="cd">QVB2BLK01CH</span><br><span class="nm">Nicovape Q B2 Device Kit Blk</span></td><td class="n">219.2</td><td class="n">23.1</td><td class="n">32.7</td><td class="n dem"><strong>275.0</strong></td><td class="n">894</td><td class="n hcl-c">8,592</td><td class="n ive-c">—</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:9%"></div><div class="bar-tp" style="width:91%"></div></div><span class="bar-tot">9,486</span></td><td class="n"><span class="badge badge-green">34.5w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS50-2</span><br><span class="nm">Nicovape Q50 Classic Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n">18.5</td><td class="n">17.1</td><td class="n">24.3</td><td class="n dem"><strong>60.0</strong></td><td class="n">410</td><td class="n hcl-c">—</td><td class="n ive-c">1,784</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:19%"></div><div class="bar-tp" style="width:81%"></div></div><span class="bar-tot">2,194</span></td><td class="n"><span class="badge badge-green">36.6w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MTL50-2</span><br><span class="nm">Nicovape Q50 Menthol Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n">39.2</td><td class="n">18.7</td><td class="n">26.8</td><td class="n dem"><strong>84.8</strong></td><td class="n">709</td><td class="n hcl-c">1,328</td><td class="n ive-c">4,528</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:11%"></div><div class="bar-tp" style="width:89%"></div></div><span class="bar-tot">6,565</span></td><td class="n"><span class="badge badge-green">77.5w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT50-2</span><br><span class="nm">Nicovape Q50 Mint Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n">42.1</td><td class="n">12.2</td><td class="n">19.0</td><td class="n dem"><strong>73.3</strong></td><td class="n">669</td><td class="n hcl-c">—</td><td class="n ive-c">2,180</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:23%"></div><div class="bar-tp" style="width:77%"></div></div><span class="bar-tot">2,849</span></td><td class="n"><span class="badge badge-green">38.9w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS35-2</span><br><span class="nm">Nicovape Q35 Classic Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">29.8</td><td class="n">18.7</td><td class="n">31.5</td><td class="n dem"><strong>80.1</strong></td><td class="n">523</td><td class="n hcl-c">8</td><td class="n ive-c">500</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:51%"></div><div class="bar-tp" style="width:49%"></div></div><span class="bar-tot">1,031</span></td><td class="n"><span class="badge badge-green">12.9w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MTL35-2</span><br><span class="nm">Nicovape Q35 Menthol Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">44.1</td><td class="n">19.9</td><td class="n">27.8</td><td class="n dem"><strong>91.8</strong></td><td class="n">467</td><td class="n hcl-c">2,580</td><td class="n ive-c">644</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:13%"></div><div class="bar-tp" style="width:87%"></div></div><span class="bar-tot">3,691</span></td><td class="n"><span class="badge badge-green">40.2w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT35-2</span><br><span class="nm">Nicovape Q35 Mint Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">33.4</td><td class="n">15.3</td><td class="n">29.5</td><td class="n dem"><strong>78.2</strong></td><td class="n">154</td><td class="n hcl-c">—</td><td class="n ive-c">1,936</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:7%"></div><div class="bar-tp" style="width:93%"></div></div><span class="bar-tot">2,090</span></td><td class="n"><span class="badge badge-green">26.7w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS20-2</span><br><span class="nm">Nicovape Q20 Classic Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">19.6</td><td class="n">14.0</td><td class="n">0.0</td><td class="n dem"><strong>33.6</strong></td><td class="n">785</td><td class="n hcl-c">—</td><td class="n ive-c">800</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:50%"></div><div class="bar-tp" style="width:50%"></div></div><span class="bar-tot">1,585</span></td><td class="n"><span class="badge badge-green">47.2w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MTL20-2</span><br><span class="nm">Nicovape Q20 Menthol Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">42.5</td><td class="n">31.8</td><td class="n">0.0</td><td class="n dem"><strong>74.4</strong></td><td class="n">975</td><td class="n hcl-c">—</td><td class="n ive-c">2,408</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:29%"></div><div class="bar-tp" style="width:71%"></div></div><span class="bar-tot">3,383</span></td><td class="n"><span class="badge badge-green">45.5w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT20-2</span><br><span class="nm">Nicovape Q20 Mint Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">64.4</td><td class="n">24.8</td><td class="n">0.0</td><td class="n dem"><strong>89.2</strong></td><td class="n">365</td><td class="n hcl-c">—</td><td class="n ive-c">1,372</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:21%"></div><div class="bar-tp" style="width:79%"></div></div><span class="bar-tot">1,737</span></td><td class="n"><span class="badge badge-green">19.5w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB302CLS20-2</span><br><span class="nm">Nicovape Q20 Classic Nicotine 50mg/ml (40mg) cartridge 2.0ml 2-pack</span></td><td class="n">291.4</td><td class="n">44.4</td><td class="n">79.7</td><td class="n dem"><strong>415.5</strong></td><td class="n">1,468</td><td class="n hcl-c">2,460</td><td class="n ive-c">—</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:37%"></div><div class="bar-tp" style="width:63%"></div></div><span class="bar-tot">3,928</span></td><td class="n"><span class="badge badge-yellow">9.5w</span></td><td class="n"><span class="status-pill st-mon">MONITOR</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB302MTL20-2</span><br><span class="nm">Nicovape Q20 Menthol Nicotine 50mg/ml (40mg) cartridge 2.0ml 2-pack</span></td><td class="n">325.4</td><td class="n">28.5</td><td class="n">40.8</td><td class="n dem"><strong>394.7</strong></td><td class="n">1,127</td><td class="n hcl-c">7,428</td><td class="n ive-c">—</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:13%"></div><div class="bar-tp" style="width:87%"></div></div><span class="bar-tot">8,555</span></td><td class="n"><span class="badge badge-green">21.7w</span></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class="row-crit"><td class="sk"><span class="cd">QPB302MNT20-2</span><br><span class="nm">Nicovape Q20 Mint Nicotine 50mg/ml (40mg) cartridge 2.0ml 2-pack</span></td><td class="n">348.6</td><td class="n">52.8</td><td class="n">0.0</td><td class="n dem"><strong>401.4</strong></td><td class="n">769</td><td class="n hcl-c">408</td><td class="n ive-c">—</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:65%"></div><div class="bar-tp" style="width:35%"></div></div><span class="bar-tot">1,177</span></td><td class="n"><span class="badge badge-red">2.9w</span></td><td class="n"><span class="status-pill st-crit">CRITICAL</span></td></tr>
+<tr class=""><td class="sk"><span class="cd">QVB2BLK01CH</span><br><span class="nm">Nicovape Q B2 Device Kit Blk</span></td><td class="n">219.2</td><td class="n">23.1</td><td class="n">32.7</td><td class="n dem"><strong>275.0</strong></td><td class="n">894</td><td class="n hcl-c">8,592</td><td class="n ive-c">—</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:9%"></div><div class="bar-tp" style="width:91%"></div></div><span class="bar-tot">9,486</span></td><td class="n"><span class="badge badge-green">34.5w</span></td><td class="n po-cell empty">—</td><td class="n"><span class="badge badge-green">34.5w</span></td><td><div class="tl"><div class="tl-bar cover" style="--out:100.0%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:100.0%"></div></div><div class="tl-lbl"><span class="out">runs out 24 Dec</span><span style="color:#cbd5e1">no PO</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS50-2</span><br><span class="nm">Nicovape Q50 Classic Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n">18.5</td><td class="n">17.1</td><td class="n">24.3</td><td class="n dem"><strong>60.0</strong></td><td class="n">410</td><td class="n hcl-c">—</td><td class="n ive-c">1,784</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:19%"></div><div class="bar-tp" style="width:81%"></div></div><span class="bar-tot">2,194</span></td><td class="n"><span class="badge badge-green">36.6w</span></td><td class="n po-cell"><span class="po-q">+13,608</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">263.4w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar popre" style="--out:100.0%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:100.0%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="po">PO 23 Jun</span><span class="ok">covered</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MTL50-2</span><br><span class="nm">Nicovape Q50 Menthol Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n">39.2</td><td class="n">18.7</td><td class="n">26.8</td><td class="n dem"><strong>84.8</strong></td><td class="n">709</td><td class="n hcl-c">1,328</td><td class="n ive-c">4,528</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:11%"></div><div class="bar-tp" style="width:89%"></div></div><span class="bar-tot">6,565</span></td><td class="n"><span class="badge badge-green">77.5w</span></td><td class="n po-cell empty">—</td><td class="n"><span class="badge badge-green">77.5w</span></td><td><div class="tl"><div class="tl-bar cover" style="--out:100.0%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:100.0%"></div></div><div class="tl-lbl"><span class="out">runs out 21 Oct</span><span style="color:#cbd5e1">no PO</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT50-2</span><br><span class="nm">Nicovape Q50 Mint Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n">42.1</td><td class="n">12.2</td><td class="n">19.0</td><td class="n dem"><strong>73.3</strong></td><td class="n">669</td><td class="n hcl-c">—</td><td class="n ive-c">2,180</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:23%"></div><div class="bar-tp" style="width:77%"></div></div><span class="bar-tot">2,849</span></td><td class="n"><span class="badge badge-green">38.9w</span></td><td class="n po-cell"><span class="po-q">+3,024</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">80.1w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar popre" style="--out:100.0%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:100.0%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="po">PO 23 Jun</span><span class="ok">covered</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS35-2</span><br><span class="nm">Nicovape Q35 Classic Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">29.8</td><td class="n">18.7</td><td class="n">31.5</td><td class="n dem"><strong>80.1</strong></td><td class="n">523</td><td class="n hcl-c">8</td><td class="n ive-c">500</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:51%"></div><div class="bar-tp" style="width:49%"></div></div><span class="bar-tot">1,031</span></td><td class="n"><span class="badge badge-green">12.9w</span></td><td class="n po-cell"><span class="po-q">+27,216</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">352.8w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar popre" style="--out:49.5%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:49.5%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="po">PO 23 Jun</span><span class="ok">covered</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MTL35-2</span><br><span class="nm">Nicovape Q35 Menthol Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">44.1</td><td class="n">19.9</td><td class="n">27.8</td><td class="n dem"><strong>91.8</strong></td><td class="n">467</td><td class="n hcl-c">2,580</td><td class="n ive-c">644</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:13%"></div><div class="bar-tp" style="width:87%"></div></div><span class="bar-tot">3,691</span></td><td class="n"><span class="badge badge-green">40.2w</span></td><td class="n po-cell"><span class="po-q">+13,608</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">188.5w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar popre" style="--out:100.0%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:100.0%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="po">PO 23 Jun</span><span class="ok">covered</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT35-2</span><br><span class="nm">Nicovape Q35 Mint Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">33.4</td><td class="n">15.3</td><td class="n">29.5</td><td class="n dem"><strong>78.2</strong></td><td class="n">154</td><td class="n hcl-c">—</td><td class="n ive-c">1,936</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:7%"></div><div class="bar-tp" style="width:93%"></div></div><span class="bar-tot">2,090</span></td><td class="n"><span class="badge badge-green">26.7w</span></td><td class="n po-cell"><span class="po-q">+18,144</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">258.9w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar popre" style="--out:100.0%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:100.0%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="po">PO 23 Jun</span><span class="ok">covered</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS20-2</span><br><span class="nm">Nicovape Q20 Classic Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">19.6</td><td class="n">14.0</td><td class="n">0.0</td><td class="n dem"><strong>33.6</strong></td><td class="n">785</td><td class="n hcl-c">—</td><td class="n ive-c">800</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:50%"></div><div class="bar-tp" style="width:50%"></div></div><span class="bar-tot">1,585</span></td><td class="n"><span class="badge badge-green">47.2w</span></td><td class="n po-cell"><span class="po-q">+9,072</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">317.4w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar popre" style="--out:100.0%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:100.0%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="po">PO 23 Jun</span><span class="ok">covered</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MTL20-2</span><br><span class="nm">Nicovape Q20 Menthol Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">42.5</td><td class="n">31.8</td><td class="n">0.0</td><td class="n dem"><strong>74.4</strong></td><td class="n">975</td><td class="n hcl-c">—</td><td class="n ive-c">2,408</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:29%"></div><div class="bar-tp" style="width:71%"></div></div><span class="bar-tot">3,383</span></td><td class="n"><span class="badge badge-green">45.5w</span></td><td class="n po-cell"><span class="po-q">+4,536</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">106.5w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar popre" style="--out:100.0%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:100.0%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="po">PO 23 Jun</span><span class="ok">covered</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT20-2</span><br><span class="nm">Nicovape Q20 Mint Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">64.4</td><td class="n">24.8</td><td class="n">0.0</td><td class="n dem"><strong>89.2</strong></td><td class="n">365</td><td class="n hcl-c">—</td><td class="n ive-c">1,372</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:21%"></div><div class="bar-tp" style="width:79%"></div></div><span class="bar-tot">1,737</span></td><td class="n"><span class="badge badge-green">19.5w</span></td><td class="n po-cell"><span class="po-q">+9,072</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">121.2w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar popre" style="--out:74.7%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:74.7%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="po">PO 23 Jun</span><span class="ok">covered</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB302CLS20-2</span><br><span class="nm">Nicovape Q20 Classic Nicotine 50mg/ml (40mg) cartridge 2.0ml 2-pack</span></td><td class="n">291.4</td><td class="n">44.4</td><td class="n">79.7</td><td class="n dem"><strong>415.5</strong></td><td class="n">1,468</td><td class="n hcl-c">2,460</td><td class="n ive-c">—</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:37%"></div><div class="bar-tp" style="width:63%"></div></div><span class="bar-tot">3,928</span></td><td class="n"><span class="badge badge-yellow">9.5w</span></td><td class="n po-cell empty">—</td><td class="n"><span class="badge badge-yellow">9.5w</span></td><td><div class="tl"><div class="tl-bar cover" style="--out:36.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:36.3%"></div></div><div class="tl-lbl"><span class="out">runs out 2 Jul</span><span style="color:#cbd5e1">no PO</span></div></div></td><td class="n"><span class="status-pill st-mon">MONITOR</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB302MTL20-2</span><br><span class="nm">Nicovape Q20 Menthol Nicotine 50mg/ml (40mg) cartridge 2.0ml 2-pack</span></td><td class="n">325.4</td><td class="n">28.5</td><td class="n">40.8</td><td class="n dem"><strong>394.7</strong></td><td class="n">1,127</td><td class="n hcl-c">7,428</td><td class="n ive-c">—</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:13%"></div><div class="bar-tp" style="width:87%"></div></div><span class="bar-tot">8,555</span></td><td class="n"><span class="badge badge-green">21.7w</span></td><td class="n po-cell empty">—</td><td class="n"><span class="badge badge-green">21.7w</span></td><td><div class="tl"><div class="tl-bar cover" style="--out:83.5%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:83.5%"></div></div><div class="tl-lbl"><span class="out">runs out 26 Sep</span><span style="color:#cbd5e1">no PO</span></div></div></td><td class="n"><span class="status-pill st-ok">OK</span></td></tr><tr class="row-crit"><td class="sk"><span class="cd">QPB302MNT20-2</span><br><span class="nm">Nicovape Q20 Mint Nicotine 50mg/ml (40mg) cartridge 2.0ml 2-pack</span></td><td class="n">348.6</td><td class="n">52.8</td><td class="n">0.0</td><td class="n dem"><strong>401.4</strong></td><td class="n">769</td><td class="n hcl-c">408</td><td class="n ive-c">—</td><td class="n"><div class="bar-wrap"><div class="bar-ws" style="width:65%"></div><div class="bar-tp" style="width:35%"></div></div><span class="bar-tot">1,177</span></td><td class="n"><span class="badge badge-red">2.9w</span></td><td class="n po-cell"><span class="po-q">+7,776</span><span class="po-dt">23 Jun 26</span></td><td class="n"><span class="badge badge-green">22.3w</span> <span style="color:#15803d;font-size:10px">&#x2191;</span></td><td><div class="tl"><div class="tl-bar gap" style="--out:11.5%;--po:31.3%">  <div class="tl-mark now"></div>  <div class="tl-mark out" style="left:11.5%"></div>  <div class="tl-mark po" style="left:31.3%"></div></div><div class="tl-lbl"><span class="out">runs out 18 May</span><span class="po">PO 23 Jun</span></div></div></td><td class="n"><span class="status-pill st-crit">CRITICAL</span></td></tr>
   </tbody></table></div>
   <div class="legend">
     <span><span class="leg-dot" style="background:var(--a)"></span>Blue bar = W/Sale SOH</span>
@@ -175,9 +214,11 @@ th.sort-asc,th.sort-desc{color:var(--a)!important}
     <span class="badge badge-red">CRITICAL</span> &lt;4 weeks &nbsp;
     <span class="badge badge-amber">LOW</span> 4–8 weeks &nbsp;
     <span class="badge badge-yellow">MONITOR</span> 8–12 weeks &nbsp;
-    <span class="badge badge-green">OK</span> 12+ weeks
+    <span class="badge badge-green">OK</span> 12+ weeks &nbsp;|&nbsp;
+    <span><span class="leg-dot" style="background:var(--crit)"></span>Timeline: red = stock-out window (runs out before next PO lands)</span>
+    <span><span class="leg-dot" style="background:var(--a)"></span>blue tick = PO landing date</span>
   </div>
-  <div class="nt">Weekly demand (v1.1, rolling): for Sigma + Symbion = (units sold in last 3 full months + current partial month) ÷ (3 × 4.33 + elapsed weeks of current month). Window auto-rolls forward each weekly refresh. API uses its own avg weekly forecast. Total Available = Sigma + Symbion + API SOH + HCL unrestricted + IVE available.</div>
+  <div class="nt">Weekly demand (v1.1, rolling): for Sigma + Symbion = (units sold in last 3 full months + current partial month) ÷ (3 × 4.33 + elapsed weeks of current month). Window auto-rolls forward each weekly refresh. API uses its own avg weekly forecast. Total Available = Sigma + Symbion + API SOH + HCL unrestricted + IVE available. <strong>Incoming PO</strong> = sum of confirmed/in-transit purchase order units landing at HCL (date = earliest Avail-from-HCL). <strong>Cover w/PO</strong> = (Total Available + Incoming PO) ÷ network demand — this is the cover figure once the PO lands. <strong>Timeline</strong> = 26-week horizon from today; markers show projected stock-out date and PO landing date.</div>
 </div>
 <div class="g2">
   <div class="ca">
@@ -189,6 +230,38 @@ th.sort-asc,th.sort-desc{color:var(--a)!important}
     <div class="cw"><canvas id="c-wks"></canvas></div>
   </div>
 </div>
+
+<div class="po-ledger">
+  <div class="ch">
+    <span>Open Purchase Orders</span>
+    <span style="font-size:10px;color:var(--mu);font-weight:400">1 PO &middot; 106,056 units incoming &middot; sorted by Avail-from-HCL</span>
+  </div>
+  <table>
+    <thead><tr>
+      <th class="lt">PO Number</th>
+      <th class="lt">Supplier</th>
+      <th class="lt">PO Date</th>
+      <th class="lt">Mode</th>
+      <th>Lines</th>
+      <th>Total Units</th>
+      <th>ETA HCL</th>
+      <th>Avail from HCL</th>
+      <th>Time to Land</th>
+      <th class="lt" style="text-align:right">Status</th>
+    </tr></thead>
+    <tbody>
+<tr title="Q50 Classic x7 13,608 · Q50 Mint x7 3,024 · Q35 Classic x7 27,216 · Q35 Menthol x7 13,608 · Q35 Mint x7 18,144 · Q20 Classic x7 9,072 · Q20 Menthol x7 4,536 · Q20 Mint x7 9,072 · Q20 Mint x2 7,776"><td class="lt"><span class="po-tag">PO-2963</span></td><td class="lt">Mason Vap</td><td class="lt" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="lt">Sea</td><td>9</td><td><strong>106,056</strong></td><td>18 Jun 26</td><td>23 Jun 26</td><td>8.1 wks</td><td class="lt" style="text-align:right"><span class="po-status confirmed">Confirmed</span></td></tr>
+    </tbody>
+    <tfoot><tr class="ft">
+      <td class="lt"><strong>TOTAL</strong></td><td></td><td></td><td></td>
+      <td><strong>9</strong></td>
+      <td><strong>106,056</strong></td>
+      <td colspan="4"></td>
+    </tr></tfoot>
+  </table>
+  <div class="nt">Hover any row to see SKU-level breakdown. POs landing earliest are listed first. "Avail from HCL" is the date stock can be despatched to wholesalers (= ETA HCL + receiving). Update <code>purchase_orders.xlsx</code> in the project folder to add new POs or mark a PO as "Received" once it appears in HCL SOH.</div>
+</div>
+
 </div>
 
 <div id="pn-overview" class="pn">
@@ -389,6 +462,82 @@ th.sort-asc,th.sort-desc{color:var(--a)!important}
 </div>
 <div class="ca"><div class="ch">Combined 3PL SOH by SKU<button class="ch-exp" onclick="dlChart('c4','3PL_SOH_by_SKU')">&#128247; PNG</button></div><div class="cw" style="height:300px"><canvas id="c4"></canvas></div></div>
 </div>
+
+<div id="pn-pos" class="pn">
+<div class="ab ab-crit">&#9888;&#65039; <div><strong>1 SKU at stock-out gap risk</strong> — projected to run out before incoming PO lands: <strong>Q20 Mint x2</strong> (2.9w current → runs out 18 May, PO lands 23 Jun = <strong style="color:#7f1d1d">36d gap</strong>). Action: pull stock forward from wholesalers or expedite the PO leg.</div></div>
+<div class="kp" style="padding:0 0 16px">
+  <div class="ki" style="border-top-color:#1e40af"><div class="kl">Open POs</div><div class="kv" style="color:#1e40af">1</div><div class="ks">Active orders</div></div>
+  <div class="ki" style="border-top-color:#1e40af"><div class="kl">PO Lines</div><div class="kv" style="color:#1e40af">9</div><div class="ks">Across all POs</div></div>
+  <div class="ki" style="border-top-color:#1e40af"><div class="kl">Units Incoming</div><div class="kv" style="color:#1e40af">106,056</div><div class="ks">Total EA units</div></div>
+  <div class="ki" style="border-top-color:#16a34a"><div class="kl">Earliest Landing</div><div class="kv" style="font-size:18px">23 Jun</div><div class="ks">Avail from HCL</div></div>
+  <div class="ki" style="border-top-color:#ea580c"><div class="kl">Landing Window</div><div class="kv" style="font-size:14px;line-height:1.2">All on 23 Jun</div><div class="ks">Earliest → latest</div></div>
+  <div class="ki" style="border-top-color:#7b2d8b"><div class="kl">Suppliers</div><div class="kv" style="font-size:14px;line-height:1.2">Mason Vap</div><div class="ks">1 active</div></div>
+</div>
+
+<div class="g2">
+  <div class="ca">
+    <div class="ch">Forward Landing Schedule — Units arriving by week<button class="ch-exp" onclick="dlChart('c-po-land','PO_Forward_Landing')">&#128247; PNG</button></div>
+    <div class="cw"><canvas id="c-po-land"></canvas></div>
+    <div class="nt">Stacked by strength group. Each bar = total units (EA) becoming available from HCL during that calendar week. Helpful for spotting concentration risk (one big landing week vs spread).</div>
+  </div>
+  <div class="ca">
+    <div class="ch">Cover Impact by SKU<span style="font-size:10px;color:var(--mu);font-weight:400">Sorted by gap-risk worst-first</span></div>
+    <div class="tw" style="max-height:380px;overflow-y:auto">
+      <table class="tb" id="tbl-po-impact"><thead><tr>
+        <th class="th-left">SKU / Description</th>
+        <th class="n">Total Stock</th>
+        <th class="n">Demand /wk</th>
+        <th class="n">Cover Now</th>
+        <th class="n" style="background:#dbeafe">Incoming</th>
+        <th class="n">Runs Out</th>
+        <th class="n">PO Lands</th>
+        <th class="n">Gap</th>
+        <th class="n" style="background:#dbeafe">Cover w/PO</th>
+        <th class="n">Risk</th>
+      </tr></thead><tbody>
+<tr class="row-crit"><td class="sk"><span class="cd">QPB302MNT20-2</span><br><span class="nm">Nicovape Q20 Mint Nicotine 50mg/ml (40mg) cartridge 2.0ml 2-pack</span></td><td class="n">1,177</td><td class="n">401.4</td><td class="n"><span class="badge badge-red">2.9w</span></td><td class="n po-cell"><span class="po-q">+7,776</span></td><td class="n">18 May 26</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#b91c1c;font-weight:700">+36d</span></td><td class="n"><span class="badge badge-green">22.3w</span></td><td class="n"><span class="po-status" style="background:#fee2e2;color:#991b1b">GAP 36d</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS35-2</span><br><span class="nm">Nicovape Q35 Classic Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">1,031</td><td class="n">80.1</td><td class="n"><span class="badge badge-green">12.9w</span></td><td class="n po-cell"><span class="po-q">+27,216</span></td><td class="n">26 Jul 26</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#15803d">-33d</span></td><td class="n"><span class="badge badge-green">352.8w</span></td><td class="n"><span class="po-status" style="background:#dcfce7;color:#166534">UPLIFT</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT20-2</span><br><span class="nm">Nicovape Q20 Mint Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">1,737</td><td class="n">89.2</td><td class="n"><span class="badge badge-green">19.5w</span></td><td class="n po-cell"><span class="po-q">+9,072</span></td><td class="n">10 Sep 26</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#15803d">-79d</span></td><td class="n"><span class="badge badge-green">121.2w</span></td><td class="n"><span class="po-status" style="background:#dcfce7;color:#166534">UPLIFT</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT35-2</span><br><span class="nm">Nicovape Q35 Mint Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">2,090</td><td class="n">78.2</td><td class="n"><span class="badge badge-green">26.7w</span></td><td class="n po-cell"><span class="po-q">+18,144</span></td><td class="n">31 Oct 26</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#15803d">-130d</span></td><td class="n"><span class="badge badge-green">258.9w</span></td><td class="n"><span class="po-status" style="background:#dcfce7;color:#166534">UPLIFT</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS50-2</span><br><span class="nm">Nicovape Q50 Classic Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n">2,194</td><td class="n">60.0</td><td class="n"><span class="badge badge-green">36.6w</span></td><td class="n po-cell"><span class="po-q">+13,608</span></td><td class="n">8 Jan 27</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#15803d">-199d</span></td><td class="n"><span class="badge badge-green">263.4w</span></td><td class="n"><span class="po-status" style="background:#dcfce7;color:#166534">UPLIFT</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MNT50-2</span><br><span class="nm">Nicovape Q50 Mint Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n">2,849</td><td class="n">73.3</td><td class="n"><span class="badge badge-green">38.9w</span></td><td class="n po-cell"><span class="po-q">+3,024</span></td><td class="n">24 Jan 27</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#15803d">-215d</span></td><td class="n"><span class="badge badge-green">80.1w</span></td><td class="n"><span class="po-status" style="background:#dcfce7;color:#166534">UPLIFT</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MTL35-2</span><br><span class="nm">Nicovape Q35 Menthol Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n">3,691</td><td class="n">91.8</td><td class="n"><span class="badge badge-green">40.2w</span></td><td class="n po-cell"><span class="po-q">+13,608</span></td><td class="n">2 Feb 27</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#15803d">-224d</span></td><td class="n"><span class="badge badge-green">188.5w</span></td><td class="n"><span class="po-status" style="background:#dcfce7;color:#166534">UPLIFT</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307MTL20-2</span><br><span class="nm">Nicovape Q20 Menthol Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">3,383</td><td class="n">74.4</td><td class="n"><span class="badge badge-green">45.5w</span></td><td class="n po-cell"><span class="po-q">+4,536</span></td><td class="n">11 Mar 27</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#15803d">-261d</span></td><td class="n"><span class="badge badge-green">106.5w</span></td><td class="n"><span class="po-status" style="background:#dcfce7;color:#166534">UPLIFT</span></td></tr><tr class=""><td class="sk"><span class="cd">QPB307CLS20-2</span><br><span class="nm">Nicovape Q20 Classic Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n">1,585</td><td class="n">33.6</td><td class="n"><span class="badge badge-green">47.2w</span></td><td class="n po-cell"><span class="po-q">+9,072</span></td><td class="n">23 Mar 27</td><td class="n">23 Jun 26</td><td class="n"><span style="color:#15803d">-273d</span></td><td class="n"><span class="badge badge-green">317.4w</span></td><td class="n"><span class="po-status" style="background:#dcfce7;color:#166534">UPLIFT</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="nt"><strong>Gap</strong> = days between projected stock-out and PO landing. Positive = stock-out window. <strong>Risk</strong>: GAP = stock-out before PO lands; TIGHT = current cover &lt;4w but PO lands in time; UPLIFT = PO meaningfully extends cover; STABLE = no immediate concern.</div>
+  </div>
+</div>
+
+<div class="ca">
+  <div class="ch">
+    <span>Open PO Lines — Detail</span>
+    <span style="font-size:10px;color:var(--mu);font-weight:400">9 lines from 1 PO</span>
+  </div>
+  <div class="tw"><table class="tb" id="tbl-po-lines"><thead>
+    <tr>
+      <th class="th-left">PO</th>
+      <th class="n">Line</th>
+      <th class="th-left">Supplier</th>
+      <th class="th-left">SKU / Description</th>
+      <th class="n">Qty (EA)</th>
+      <th class="n" title="Share of this PO's total units">% of PO</th>
+      <th class="n">PO Date</th>
+      <th class="n">Despatch China</th>
+      <th>Mode</th>
+      <th class="n">ETA HCL</th>
+      <th class="n">Avail HCL</th>
+      <th class="n">Status</th>
+    </tr>
+    <tr class="frow">
+      <td><input class="fi" data-col="0" placeholder="Filter PO…" oninput="ftbl('tbl-po-lines')"></td>
+      <td></td>
+      <td><input class="fi" data-col="2" placeholder="Filter supplier…" oninput="ftbl('tbl-po-lines')"></td>
+      <td><input class="fi" data-col="3" placeholder="Filter SKU…" oninput="ftbl('tbl-po-lines')"></td>
+      <td></td><td></td><td></td><td></td>
+      <td><select class="fi" data-col="8" onchange="ftbl('tbl-po-lines')"><option value="">All</option><option>Sea</option><option>Air</option></select></td>
+      <td></td><td></td>
+      <td><select class="fi" data-col="11" onchange="ftbl('tbl-po-lines')"><option value="">All</option><option>Confirmed</option><option>In Transit</option><option>Received</option></select></td>
+    </tr>
+  </thead><tbody>
+<tr><td><span class="po-tag">PO-2963</span></td><td class="n">2</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB307CLS50-2</span><br><span class="nm">Nicovape Q50 Classic Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n"><strong>13,608</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">13%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr><tr><td><span class="po-tag">PO-2963</span></td><td class="n">3</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB307MNT50-2</span><br><span class="nm">Nicovape Q50 Mint Nicotine 50mg/ml (100mg) cartridge 2.0ml 7-pack</span></td><td class="n"><strong>3,024</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">3%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr><tr><td><span class="po-tag">PO-2963</span></td><td class="n">4</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB307MTL35-2</span><br><span class="nm">Nicovape Q35 Menthol Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n"><strong>13,608</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">13%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr><tr><td><span class="po-tag">PO-2963</span></td><td class="n">5</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB307CLS35-2</span><br><span class="nm">Nicovape Q35 Classic Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n"><strong>27,216</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">26%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr><tr><td><span class="po-tag">PO-2963</span></td><td class="n">6</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB307MNT35-2</span><br><span class="nm">Nicovape Q35 Mint Nicotine 50mg/ml (70mg) cartridge 2.0ml 7-pack</span></td><td class="n"><strong>18,144</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">17%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr><tr><td><span class="po-tag">PO-2963</span></td><td class="n">7</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB307MTL20-2</span><br><span class="nm">Nicovape Q20 Menthol Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n"><strong>4,536</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">4%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr><tr><td><span class="po-tag">PO-2963</span></td><td class="n">8</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB307CLS20-2</span><br><span class="nm">Nicovape Q20 Classic Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n"><strong>9,072</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">9%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr><tr><td><span class="po-tag">PO-2963</span></td><td class="n">9</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB307MNT20-2</span><br><span class="nm">Nicovape Q20 Mint Nicotine 50mg/ml (40mg) cartridge 2.0ml 7-pack</span></td><td class="n"><strong>9,072</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">9%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr><tr><td><span class="po-tag">PO-2963</span></td><td class="n">12</td><td style="font-size:10.5px">Mason Vap</td><td class="sk"><span class="cd">QPB302MNT20-2</span><br><span class="nm">Nicovape Q20 Mint Nicotine 50mg/ml (40mg) cartridge 2.0ml 2-pack</span></td><td class="n"><strong>7,776</strong></td><td class="n" style="color:var(--mu);font-size:10.5px">7%</td><td class="n" style="color:var(--mu);font-size:10.5px">16 Mar 26</td><td class="n" style="color:var(--mu);font-size:10.5px">21 May 26</td><td style="text-align:center"><span class="po-tag" style="background:#fef3c7;color:#92400e">Sea</span></td><td class="n">18 Jun 26</td><td class="n"><strong>23 Jun 26</strong></td><td class="n"><span class="po-status confirmed">Confirmed</span></td></tr>
+  </tbody></table></div>
+  <div class="nt">All open PO lines, every row independently filterable/sortable. Status = Confirmed (PO raised, units committed) / In Transit (units on the water) / Received (landed at HCL — automatically excluded from cover calcs once flipped). To add a PO: edit <code>purchase_orders.xlsx</code> in the project folder and re-run the dashboard build.</div>
+</div>
+</div>
 </div>
 <script>
 function showTab(name, el){
@@ -404,6 +553,7 @@ function showTab(name, el){
   if(target && target.classList && !target.classList.contains('mt') && target.classList.contains('mt')) target.classList.add('active');
   if(name==='sigma'&&!window._s3){try{initC3()}catch(e){}window._s3=1;}
   if(name==='threepl'&&!window._s4){try{initC4()}catch(e){}window._s4=1;}
+  if(name==='pos'&&!window._spo){try{initCpo()}catch(e){}window._spo=1;}
   setTimeout(initAllSorts, 60);
 }
 function showSt(st,el){
@@ -422,6 +572,10 @@ var SKU_LONG={"QVB2BLK01CH": "Nicovape Q B2 Device Kit Blk", "QPB307CLS50-2": "N
 var SIG_W=[219.18,18.54,39.25,42.09,29.83,44.08,33.39,19.56,42.51,64.43,291.4,325.39,348.64];
 var SYM_W=[23.11,17.12,18.68,12.21,18.74,19.88,15.27,14.01,31.85,24.78,44.42,28.5,52.8];
 var API_W=[32.67,24.33,26.83,19.0,31.5,27.83,29.5,0.0,0.0,0.0,79.67,40.83,0.0];
+// Forward landing schedule data (PO module)
+var PO_LAND_LABELS=["w/c 22 Jun 26"];
+var PO_LAND_SERIES={"50mg 7pk": [16632], "35mg 7pk": [58968], "20mg 7pk": [22680], "20mg Twin": [7776]};
+var PO_LAND_COLORS={"50mg 7pk": "#dc2626", "35mg 7pk": "#ea580c", "20mg 7pk": "#16a34a", "20mg Twin": "#0077b6"};
 
 window.addEventListener('load', function(){
   var four_wk = DEM.map(function(d){return d*4});
@@ -476,6 +630,50 @@ function initC4(){
     {label:'HCL (Sydney)',data:HCLA,backgroundColor:'#7b2d8b',stack:'s'},
     {label:'IVE (Erskine Park NSW)',data:IVEA,backgroundColor:'#2d6a4f',stack:'s'}
   ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{font:{size:9},maxRotation:45}},y:{stacked:true,grid:{color:'#f0f4f8'}}},plugins:{legend:{position:'bottom',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false}}}});
+}
+function initCpo(){
+  var canvas = document.getElementById('c-po-land');
+  if(!canvas) return;
+  if(!PO_LAND_LABELS.length){
+    var ctx = canvas.getContext('2d');
+    canvas.height = 200;
+    ctx.font = '13px -apple-system,BlinkMacSystemFont,sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'center';
+    ctx.fillText('No open POs to display', canvas.width/2, canvas.height/2);
+    return;
+  }
+  var datasets = [];
+  Object.keys(PO_LAND_SERIES).forEach(function(grp){
+    datasets.push({
+      label: grp,
+      data: PO_LAND_SERIES[grp],
+      backgroundColor: PO_LAND_COLORS[grp],
+      stack: 's'
+    });
+  });
+  new Chart(canvas.getContext('2d'),{type:'bar',
+    data:{labels:PO_LAND_LABELS, datasets:datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{stacked:true, ticks:{font:{size:10}, maxRotation:35}},
+        y:{stacked:true, grid:{color:'#f0f4f8'}, title:{display:true, text:'Units (EA)', font:{size:10}}}
+      },
+      plugins:{
+        legend:{position:'bottom', labels:{font:{size:10}}},
+        tooltip:{mode:'index', intersect:false,
+          callbacks:{
+            footer: function(items){
+              var sum = 0;
+              items.forEach(function(i){sum += i.parsed.y;});
+              return 'Total: ' + sum.toLocaleString() + ' units';
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 /* ---- UNIVERSAL TABLE SORT ---- */
